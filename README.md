@@ -26,7 +26,7 @@ grunt.loadNpmTasks('grunt-style-injector');
 ##Config
 Here's an example of the simplest configuration possible (options are explained below)
 
-```
+```js
 styleinjector: {
     files: {
         src : 'assets/css/style.css'
@@ -44,7 +44,7 @@ When you run this command you'll receive a html snippet in the command line, pas
 
 Here's another example config with options, each will be explained after.
 
-```
+```js
 styleinjector: {
     files: {
         src : 'assets/css/style.css'
@@ -62,7 +62,7 @@ styleinjector: {
 ###watchTask (default: *false*)
 Style-Injector is not a replacement for regular `watch` tasks (such as compiling SASS, LESS etc), they are designed to be used together. If you intend to do this, set this option to true and be sure to call the `watch` task AFTER `styleinjector`. For example, to compile SASS and then inject the CSS into all open browsers (without a page refresh), your config for all three tasks might look something like this:
 
-```
+```js
 module.exports = function (grunt) {
 
     grunt.initConfig({
@@ -106,7 +106,7 @@ By default, the task will inform you when a file has been changed & when browser
 ###urlTransforms (default: null)
 Style-Injector works by looking for the changed file-name in the current page & because you need to reference files *relative* to your Gruntfile, there may be parts of the file-path that stop it working. `urlTransforms` allows you to specify parts of the file-path to remove. For example:
 
-```
+```js
 grunt.initConfig({
     styleinjector: {
         files: {
@@ -127,7 +127,7 @@ grunt.initConfig({
 ###host (default: *null*)
 Style-Injector will sort this for you, but if you have a reason to specify a host, you can do so here. For example:
 
-```
+```js
 grunt.initConfig({
     styleinjector: {
         files: {
@@ -146,7 +146,7 @@ The power of Style-Injector comes when you have multiple devices/browsers connec
 ##Live Reload
 Style-Injector will, as the name implies, inject CSS into all connected browsers without reloading the page. It even works on VMs running IE 7 & 8! But that's not all it does. It can also live-inject jpg & png files too, as well as perform a hard refresh for JS, PHP, HTML files etc. For example:
 
-```
+```js
 grunt.initConfig({
     styleinjector: {
         files: {
