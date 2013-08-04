@@ -32,7 +32,7 @@ module.exports = function (grunt) {
         });
 
         //noinspection JSUnresolvedVariable,JSCheckFunctionSignatures
-        var styleinjector = require('../lib/style-injector.js').watch(this.filesSrc, options, done);
+        var styleinjector = require('./lib/style-injector.js').watch(this.filesSrc, options, done);
 
         //noinspection JSUnresolvedVariable
         if (options.watchTask) {

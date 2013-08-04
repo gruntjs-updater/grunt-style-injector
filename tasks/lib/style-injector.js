@@ -12,7 +12,7 @@ var parser = new UAParser();
 
 var options;
 
-var scriptData = fs.readFileSync('lib/style-injector-client.js', "UTF-8");
+var scriptData = fs.readFileSync(__dirname + '/style-injector-client.js', "UTF-8");
 
 var messages = {
     connection: function (browser) {
