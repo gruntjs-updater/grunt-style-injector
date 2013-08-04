@@ -14,6 +14,8 @@ var options = {
         "css": "link",
         "jpg": "img",
         "png": "img",
+        "svg": "img",
+        "gif": "img",
         "js": "script"
     },
     attrs: {
