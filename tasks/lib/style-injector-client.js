@@ -1,5 +1,7 @@
 (function (io) {
 
+    var socket = io.connect('http://REMOVE');
+
     socket.on('reload', function (data) {
         if (data) {
             if (data.url) {
@@ -10,21 +12,54 @@
         }
     });
 
-    var options = {
-        tagNames: {
-            "css": "link",
-            "jpg": "img",
-            "png": "img",
-            "svg": "img",
-            "gif": "img",
-            "js": "script"
-        },
-        attrs: {
-            "link": "href",
-            "img": "src",
-            "script": "src"
+    socket.on('location:update', function (data) {
+        if (data.url) {
+            window.location = data.url;
         }
+    });
+
+    var clickCallback = function (e) {
+
+        // if preventDefault exists run it on the original event
+        if ( e.preventDefault ) {
+            e.preventDefault();
+        } else {
+            e.returnValue = false;
+        }
+        var elem = e.target || e.srcElement, href;
+
+        socket.emit("location", { url: elem.href });
+
+//        window.location = elem.href;
     };
+
+    var links = document.getElementsByTagName("a");
+
+    for (var i = 0, n = links.length; i < n; i += 1) {
+
+        if (!links[i].addEventListener) {
+            links[i].attachEvent("onclick", clickCallback);
+        }
+        else {
+            links[i].addEventListener("click", clickCallback, false);
+        }
+    }
+
+        var options = {
+            tagNames: {
+                "css": "link",
+                "jpg": "img",
+                "png": "img",
+                "svg": "img",
+                "gif": "img",
+                "js": "script"
+            },
+            attrs: {
+                "link": "href",
+                "img": "src",
+                "script": "src"
+            }
+        };
 
     /**
      *
@@ -99,7 +134,5 @@
 
         elem[attr] = currentSrc + "?rel=" + new Date().getTime();
     }
-
-    var socket = io.connect('http://REMOVE');
 
 }(io));

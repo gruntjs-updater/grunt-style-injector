@@ -138,6 +138,21 @@ grunt.initConfig({
     },
 });
 ```
+###ghostMode (default: *false*) **Experimental**
+Enable this if you want Style-Injector to keep all your connected browsers in sync when you change page. For Example:
+```js
+grunt.initConfig({
+    styleinjector: {
+        files: {
+            src : 'app/assets/css/*.css',
+        },
+        options: {
+            host : "192.168.0.1",
+            ghostMode: true
+        },
+    },
+});
+```
 
 > A quick word on hosts...
 The power of Style-Injector comes when you have multiple devices/browsers connected. To do this, you use your networks IP instead of `localhost`. For example, you may have a php/node/mamp server running at `localhost:8000`. Swap out the localhost part for something like `192.168.0.1` (find yours by running `ifconfig` on Mac, `ipconfig` on Windows) and you can connect to **192.168.0.1:8000**. Now, with Style-Injector running, you can have as many browsers/devices connected and they will all live-update when you change a file.
@@ -170,3 +185,5 @@ In lieu of a formal styleguide, take care to maintain the existing coding style.
 
 ## Release History
 0.1.0 - initial release
+0.1.1 - Bug fixes release
+0.1.3 - Added initial implentation of Ghost-mode

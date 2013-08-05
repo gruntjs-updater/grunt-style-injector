@@ -114,6 +114,29 @@ var serveCustomScript = function (hostIp, socketIoPort, scriptPort) {
 
 
 /**
+ *
+ * @param ioInstance
+ * @param url
+ */
+var updateLocations = function (ioInstance, url) {
+    console.log("updateing Loactions", url);
+    ioInstance.sockets.emit("location:update", { url: url });
+};
+
+/**
+ * If ghostMode was enabled, inform all browsers when any of them changes URL.
+ * @param io
+ * @param client
+ * @param options
+ */
+var setLocationTracking = function (io, client, options) {
+    if (options.ghostMode) {
+        client.on("location", function (data) {
+            updateLocations(io, data.url);
+        });
+    }
+};
+/**
  * Method exposed to Grunt Task
  * @param {array} files - relative file paths
  * @param {object} gruntOptions - merged default options & user options
@@ -129,7 +152,7 @@ module.exports.watch = function (files, gruntOptions, done) {
          * Find an empty port for SOCKET.IO
          * @param callback
          */
-                function (callback) {
+        function (callback) {
             portScanner.findAPortNotInUse(3000, 3020, 'localhost', function (error, port) {
                 callback(null, port);
             });
@@ -144,7 +167,12 @@ module.exports.watch = function (files, gruntOptions, done) {
             // print to console when browsers connect
             io.sockets.on("connection", function (client) {
                 ua = client.handshake.headers['user-agent'];
+
                 log(messages.connection(parser.setUA(ua).getBrowser()), false);
+
+                // Set up ghost mode
+                setLocationTracking(io, client, options);
+
             });
 
             // Find a free port for our custom client script

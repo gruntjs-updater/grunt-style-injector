@@ -28,7 +28,8 @@ module.exports = function (grunt) {
             debugInfo: true,
             reloadFileTypes: ['.php', '.html', '.js', '.erb'],
             injectFileTypes: ['.css', '.png', '.jpg', '.svg', '.gif'],
-            host: null
+            host: null,
+            ghostMode: false
         });
 
         //noinspection JSUnresolvedVariable,JSCheckFunctionSignatures
