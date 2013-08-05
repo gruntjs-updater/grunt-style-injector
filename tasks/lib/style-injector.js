@@ -149,7 +149,7 @@ module.exports.watch = function (files, gruntOptions, done) {
 
             // Find a free port for our custom client script
             portScanner.findAPortNotInUse(3000, 3020, 'localhost', function (error, scriptPort) {
-                callback(null, io, getHostIp(), socketIoPort, scriptPort);
+                callback(null, io, getHostIp(options), socketIoPort, scriptPort);
             });
 
         },
@@ -193,7 +193,11 @@ var transformUrl = function (path, urlTransforms) {
  * Get the external HostIp
  * @returns {*}
  */
-var getHostIp = function () {
+var getHostIp = function (options) {
+
+    if (options.host) {
+        return options.host;
+    }
 
     var os = require('os');
     var networkInterfaces = os.networkInterfaces();

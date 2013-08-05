@@ -64,7 +64,6 @@ Style-Injector is not a replacement for regular `watch` tasks (such as compiling
 
 ```js
 module.exports = function (grunt) {
-
     grunt.initConfig({
         watch: {
             files: "assets/scss/**/*.scss",
@@ -96,7 +95,6 @@ module.exports = function (grunt) {
 
     // create custom task-list
     grunt.registerTask('default', ["styleinjector", "watch"]);
-
 };
 ```
 
@@ -125,7 +123,8 @@ grunt.initConfig({
 ```
 
 ###host (default: *null*)
-Style-Injector will sort this for you, but if you have a reason to specify a host, you can do so here. For example:
+Style-Injector will try to figure this out for you. But to make absolutely sure it works, you can be specific about your host IP here.
+For example:
 
 ```js
 grunt.initConfig({
