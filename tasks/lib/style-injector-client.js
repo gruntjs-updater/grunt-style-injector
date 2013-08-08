@@ -2,6 +2,13 @@
 
     var socket = io.connect('http://REMOVE');
 
+    var ghost = {};
+
+    ghost.id = Math.random();
+
+    var event = (window.addEventListener) ? "addEventListener" : "attachEvent";
+    var prefix = (window.addEventListener) ? "" : "on";
+
     socket.on('reload', function (data) {
         if (data) {
             if (data.url) {
@@ -18,48 +25,103 @@
         }
     });
 
-    var clickCallback = function (e) {
+    socket.on("scroll:update", function (data) {
+        ghost.disabled = true;
+        window.scrollTo(0, data.position);
+    });
 
-        // if preventDefault exists run it on the original event
-        if ( e.preventDefault ) {
-            e.preventDefault();
-        } else {
-            e.returnValue = false;
+    socket.on("connection", function (options) {
+        processOptions(options);
+    });
+
+    /**
+     * Process options retrieved from grunt.
+     * @param options
+     */
+    var processOptions = function (options) {
+        if (options.ghostMode) {
+            initGhostMode(options.ghostMode);
         }
-        var elem = e.target || e.srcElement, href;
-
-        socket.emit("location", { url: elem.href });
-
-//        window.location = elem.href;
+        ghost.id = options.id;
     };
 
-    var links = document.getElementsByTagName("a");
 
-    for (var i = 0, n = links.length; i < n; i += 1) {
-
-        if (!links[i].addEventListener) {
-            links[i].attachEvent("onclick", clickCallback);
-        }
-        else {
-            links[i].addEventListener("click", clickCallback, false);
-        }
-    }
-
-        var options = {
-            tagNames: {
-                "css": "link",
-                "jpg": "img",
-                "png": "img",
-                "svg": "img",
-                "gif": "img",
-                "js": "script"
-            },
-            attrs: {
-                "link": "href",
-                "img": "src",
-                "script": "src"
+    /**
+     * Attempt to keep browser scroll Positions in check.
+     * @param evt
+     */
+    var scrollListener = function (evt) {
+        var scrollTop = document.getScroll()[1];
+        if (!ghost) {
+            ghost.scrollTop = scrollTop[0];
+        } else {
+            if (!ghost.disabled) {
+                socket.emit("scroll", { pos: scrollTop, ghostId: ghost.id });
             }
-        };
+            ghost.scrollTop = scrollTop;
+        }
+        ghost.disabled = false;
+    };
+
+    document.getScroll= function(){
+        if(window.pageYOffset!= undefined){
+            return [pageXOffset, pageYOffset];
+        }
+        else{
+            var sx, sy, d= document, r= d.documentElement, b= d.body;
+            sx= r.scrollLeft || b.scrollLeft || 0;
+            sy= r.scrollTop || b.scrollTop || 0;
+            return [sx, sy];
+        }
+    };
+
+    /**
+     * Initi Ghost mode
+     */
+    var initGhostMode = function (ghostMode) {
+
+        // Scroll event
+        if (ghostMode.scroll) {
+            window[event](prefix+"scroll", scrollListener, false);
+        }
+
+        if (ghostMode.links) {
+            // Add click handler to links.
+            var links = document.getElementsByTagName("a");
+            for (var i = 0, n = links.length; i < n; i += 1) {
+                links[i][event](prefix+"click", clickCallback, false);
+            }
+        }
+    };
+
+    /**
+     * Click Call Back
+     * @param e
+     */
+    var clickCallback = function (e) {
+
+        var elem = e.target || e.srcElement;
+        socket.emit("location", { url: elem.href });
+
+    };
+
+
+    var options = {
+        tagNames: {
+            "css": "link",
+            "jpg": "img",
+            "png": "img",
+            "svg": "img",
+            "gif": "img",
+            "js": "script"
+        },
+        attrs: {
+            "link": "href",
+            "img": "src",
+            "script": "src"
+        }
+    };
+
 
     /**
      *

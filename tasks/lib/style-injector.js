@@ -33,6 +33,9 @@ var messages = {
         inject: function () {
             return clc.yellow("Injecting file into all connected browsers...");
         }
+    },
+    location: function (url) {
+        return clc.yellow("Link clicked! Redirecting all browser to " + clc.green(url));
     }
 };
 
@@ -119,10 +122,18 @@ var serveCustomScript = function (hostIp, socketIoPort, scriptPort) {
  * @param url
  */
 var updateLocations = function (ioInstance, url) {
-    console.log("updateing Loactions", url);
+    log(messages.location(url), false);
     ioInstance.sockets.emit("location:update", { url: url });
 };
 
+/**
+ * Update scroll position of browsers.
+ * @param client
+ * @param data
+ */
+var updateScrollPosition = function (client, data) {
+    client.broadcast.emit("scroll:update", { position: data.pos, ghostId: data.ghostId });
+};
 /**
  * If ghostMode was enabled, inform all browsers when any of them changes URL.
  * @param io
@@ -130,9 +141,14 @@ var updateLocations = function (ioInstance, url) {
  * @param options
  */
 var setLocationTracking = function (io, client, options) {
+
+    // remember the context of the client that emitted the event.
     if (options.ghostMode) {
         client.on("location", function (data) {
             updateLocations(io, data.url);
+        });
+        client.on("scroll", function (data) {
+            updateScrollPosition(client, data)
         });
     }
 };
@@ -166,6 +182,12 @@ module.exports.watch = function (files, gruntOptions, done) {
 
             // print to console when browsers connect
             io.sockets.on("connection", function (client) {
+
+                // When a client connects, give them the options.
+                options.id = client.id;
+
+                client.emit("connection", options);
+
                 ua = client.handshake.headers['user-agent'];
 
                 log(messages.connection(parser.setUA(ua).getBrowser()), false);

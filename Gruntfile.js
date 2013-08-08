@@ -16,16 +16,16 @@ module.exports = function (grunt) {
             all: [
                 'Gruntfile.js',
                 'tasks/*.js',
-                '<%= nodeunit.tests %>',
+                '<%= nodeunit.tests %>'
             ],
             options: {
-                jshintrc: '.jshintrc',
-            },
+                jshintrc: '.jshintrc'
+            }
         },
 
         // Before generating any new files, remove any previously-created files.
         clean: {
-            tests: ['tmp'],
+            tests: ['tmp']
         },
         watch: {
             files: "test/*"
@@ -42,7 +42,10 @@ module.exports = function (grunt) {
                         remove: "test/fixtures/"
                     },
                     host: "192.168.0.7",
-                    ghostMode: false
+                    ghostMode: {
+                        scroll: true,
+                        links: true
+                    }
                 }
             }
         },

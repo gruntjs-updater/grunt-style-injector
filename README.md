@@ -8,7 +8,15 @@ This plugin requires Grunt `~0.4.1`
 If you haven't used [Grunt](http://gruntjs.com/) before, be sure to check out the [Getting Started](http://gruntjs.com/getting-started) guide, as it explains how to create a [Gruntfile](http://gruntjs.com/sample-gruntfile) as well as install and use Grunt plugins.
 
 ##About
+**Live CSS-injecting with NO page refresh**
+
 This plugin gives you live style-injecting into all browsers. It also provides live-reloading of files that cannot be injected (php, html etc). I was inspired to build this because the popular live-reload plugin does not work with IE 7 & 8. *This one does!*
+
+It can also be used in **Ghost-Mode** where all connected browers/devices will try to keep in sync. Ghost-Mode currently supports two options:
+
+**links** - When you click a link in one browser (say, Chrome on desktop), all of the other browsers you have open will navigate to the same link.
+
+**scroll** - When you scroll a website in one browser, all the others will follow suit. (very useful when developing with multiple monitors/devices )
 
 
 ##Install
@@ -61,6 +69,7 @@ styleinjector: {
 ```
 ###watchTask (default: *false*)
 Style-Injector is not a replacement for regular `watch` tasks (such as compiling SASS, LESS etc), they are designed to be used together. If you intend to do this, set this option to true and be sure to call the `watch` task AFTER `styleinjector`. For example, to compile SASS and then inject the CSS into all open browsers (without a page refresh), your config for all three tasks might look something like this:
+
 
 ```js
 module.exports = function (grunt) {
@@ -138,8 +147,16 @@ grunt.initConfig({
     },
 });
 ```
+> A quick word on hosts...
+The power of Style-Injector comes when you have multiple devices/browsers connected. To do this, you use your networks IP instead of `localhost`. For example, you may have a php/node/mamp server running at `localhost:8000`. Swap out the localhost part for something like `192.168.0.1` (find yours by running `ifconfig` on Mac, `ipconfig` on Windows) and you can connect to **192.168.0.1:8000**. Now, with Style-Injector running, you can have as many browsers/devices connected and they will all live-update when you change a file.
+
 ###ghostMode (default: *false*) **Experimental**
-Enable this if you want Style-Injector to keep all your connected browsers in sync when you change page. For Example:
+There are currently two options for **ghostMode** `scroll` and `links`.
+
+- Scroll. Enable this and your connected browsers will attempt to keep in sync
+- Links. Enable this and your connected browsers will follow each other around. (note: this could be problematic if you already have click events
+on `<a>` elements. It's designed to just make it easy to view multiple pages in the same site and have all browsers keep in sync while in development.
+
 ```js
 grunt.initConfig({
     styleinjector: {
@@ -148,14 +165,15 @@ grunt.initConfig({
         },
         options: {
             host : "192.168.0.1",
-            ghostMode: true
+            ghostMode: {
+                scroll: true,
+                links: true
+            }
         },
     },
 });
 ```
 
-> A quick word on hosts...
-The power of Style-Injector comes when you have multiple devices/browsers connected. To do this, you use your networks IP instead of `localhost`. For example, you may have a php/node/mamp server running at `localhost:8000`. Swap out the localhost part for something like `192.168.0.1` (find yours by running `ifconfig` on Mac, `ipconfig` on Windows) and you can connect to **192.168.0.1:8000**. Now, with Style-Injector running, you can have as many browsers/devices connected and they will all live-update when you change a file.
 
 ##Live Reload
 Style-Injector will, as the name implies, inject CSS into all connected browsers without reloading the page. It even works on VMs running IE 7 & 8! But that's not all it does. It can also live-inject jpg & png files too, as well as perform a hard refresh for JS, PHP, HTML files etc. For example:
@@ -186,4 +204,5 @@ In lieu of a formal styleguide, take care to maintain the existing coding style.
 ## Release History
 0.1.0 - initial release
 0.1.1 - Bug fixes release
-0.1.3 - Added initial implentation of Ghost-mode
+0.1.3 - Added initial implentation of Ghost-mode (link)
+0.1.4 - refined ghost-mode and added scroll
