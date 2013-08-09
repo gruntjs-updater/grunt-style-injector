@@ -134,6 +134,15 @@ var updateLocations = function (ioInstance, url) {
 var updateScrollPosition = function (client, data) {
     client.broadcast.emit("scroll:update", { position: data.pos, ghostId: data.ghostId });
 };
+
+/**
+ * Update scroll position of browsers.
+ * @param client
+ * @param data
+ */
+var updateFormField = function (client, data) {
+    client.broadcast.emit("input:update", { id: data.id, value: data.value });
+};
 /**
  * If ghostMode was enabled, inform all browsers when any of them changes URL.
  * @param io
@@ -149,6 +158,9 @@ var setLocationTracking = function (io, client, options) {
         });
         client.on("scroll", function (data) {
             updateScrollPosition(client, data)
+        });
+        client.on("input:type", function (data) {
+            updateFormField(client, data)
         });
     }
 };

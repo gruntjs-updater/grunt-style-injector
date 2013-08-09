@@ -41,7 +41,7 @@ module.exports = function (grunt) {
                     urlTransforms: {
                         remove: "test/fixtures/"
                     },
-                    host: "192.168.0.7",
+//                    host: "192.168.0.7",
                     ghostMode: {
                         scroll: true,
                         links: true

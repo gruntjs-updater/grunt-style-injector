@@ -4,10 +4,13 @@
 
     var ghost = {};
 
-    ghost.id = Math.random();
+    var target = function (evt) {
+        return evt.target || evt.srcElement;
+    };
 
-    var event = (window.addEventListener) ? "addEventListener" : "attachEvent";
-    var prefix = (window.addEventListener) ? "" : "on";
+    ghost.id = Math.random();
+    ghost.eventListener = (window.addEventListener) ? "addEventListener" : "attachEvent";
+    ghost.prefix = (window.addEventListener) ? "" : "on";
 
     socket.on('reload', function (data) {
         if (data) {
@@ -30,6 +33,12 @@
         window.scrollTo(0, data.position);
     });
 
+    socket.on("input:update", function (data) {
+        ghost.disabled = true;
+        var elem = document.getElementById(data.id);
+        elem.value = data.value;
+    });
+
     socket.on("connection", function (options) {
         processOptions(options);
     });
@@ -44,7 +53,6 @@
         }
         ghost.id = options.id;
     };
-
 
     /**
      * Attempt to keep browser scroll Positions in check.
@@ -76,22 +84,68 @@
     };
 
     /**
+     * Watch for input focus on form element
+     */
+    var inputFocusCallback = function(evt) {
+        var targetElem = target(evt);
+        socket.emit("input:focus", { id: targetElem.id }); // Todo - Is this needed?
+        if (targetElem.type === "text") {
+            targetElem[ghost.eventListener](ghost.prefix+"keyup", keyupCallback, false);
+        }
+    };
+
+    /**
+     * Keyup Call back - inform all browsers
+     * @param evt
+     */
+    var keyupCallback = function (evt) {
+        socket.emit("input:type", { id: evt.target.id, value: evt.target.value });
+    };
+
+    /**
+     * Watch for input focus on form element
+     */
+    var inputBlurCallback = function(evt) {
+        if (evt.target.type === "text") {
+//            target(evt).
+//            evt.target.removeEventListener("keyup");
+        }
+    };
+
+
+    /**
+     * Helper to attach events in a cross-browser manner.
+     * @param elems
+     * @param event
+     * @param callback
+     */
+    var addEvents = function (elems, event, callback) {
+        for (var i = 0, n = elems.length; i < n; i += 1) {
+            elems[i][ghost.eventListener](ghost.prefix+event, callback, false);
+        }
+    };
+
+    /**
      * Initi Ghost mode
      */
     var initGhostMode = function (ghostMode) {
 
         // Scroll event
         if (ghostMode.scroll) {
-            window[event](prefix+"scroll", scrollListener, false);
+            window[ghost.eventListener](ghost.prefix+"scroll", scrollListener, false);
         }
 
         if (ghostMode.links) {
             // Add click handler to links.
             var links = document.getElementsByTagName("a");
-            for (var i = 0, n = links.length; i < n; i += 1) {
-                links[i][event](prefix+"click", clickCallback, false);
-            }
+            addEvents(links, "click", clickCallback);
         }
+
+        // Form Filling
+        var inputs = document.getElementsByTagName("input");
+        addEvents(inputs, "focus", inputFocusCallback);
+        addEvents(inputs, "blur", inputBlurCallback);
+
     };
 
     /**
