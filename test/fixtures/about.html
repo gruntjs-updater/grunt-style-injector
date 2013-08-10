@@ -1,18 +1,29 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width">
     <title>About us</title>
     <link rel="stylesheet" href="assets/style.css"/>
+
 </head>
 <body>
+<div class="container">
+    <h1>Style-injector Ghost Mode</h1>
+    <p>Text Inputs: synced</p>
+    <input type="text" name="email" value="" id="email" />
 
-<input type="text" name="email" value="" id="email" />
+    <p>Select Boxes: synced</p>
+    <select name="country" id="country">
+        <option value="uk">Uk</option>
+        <option value="spain">Spain</option>
+        <option value="france">France</option>
+    </select>
 
-<select name="country" id="country">
-    <option value="uk">Uk</option>
-    <option value="spain">Spain</option>
-    <option value="france">France</option>
-</select>
+    <p>Text Areas: synced</p>
+    <textarea name="message" id="message" cols="30" rows="10"></textarea>
+</div>
 
 <h1>Line</h1>
 <h1>Line 2</h1>
@@ -45,7 +56,7 @@
 <a href="/">Home page</a>
 
 <!-- Paste Snippet from command-line here -->
-<script src='http://172.20.10.4:3000/socket.io/socket.io.js'></script>
-<script src='http://172.20.10.4:3001/style-injector-client.js'></script>
+<script src='http://192.168.0.7:3000/socket.io/socket.io.js'></script>
+<script src='http://192.168.0.7:3001/style-injector-client.js'></script>
 </body>
 </html>

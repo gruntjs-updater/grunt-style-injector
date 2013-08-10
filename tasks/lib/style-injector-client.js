@@ -3,14 +3,11 @@
     var socket = io.connect('http://REMOVE');
 
     var ghost = {};
-
-    var target = function (evt) {
-        return evt.target || evt.srcElement;
-    };
-
     ghost.id = Math.random();
     ghost.eventListener = (window.addEventListener) ? "addEventListener" : "attachEvent";
+    ghost.removeEventListener = (window.removeEventListener) ? "removeEventListener" : "detachEvent";
     ghost.prefix = (window.addEventListener) ? "" : "on";
+    ghost.cache = {};
 
     socket.on('reload', function (data) {
         if (data) {
@@ -35,13 +32,41 @@
 
     socket.on("input:update", function (data) {
         ghost.disabled = true;
-        var elem = document.getElementById(data.id);
+        var elem = checkCache(data.id);
         elem.value = data.value;
     });
 
     socket.on("connection", function (options) {
         processOptions(options);
     });
+
+    /**
+     * Check if we've already had access to this element.
+     * @param {string} id
+     * @returns {boolean|HTMLElement}
+     */
+    var checkCache = function (id) {
+        var elem;
+        if (ghost.cache[id]) {
+            return ghost.cache[id].elem;
+        } else {
+            elem = document.getElementById(id);
+            if (elem) {
+                ghost.cache[id] = {};
+                ghost.cache[id].elem = document.getElementById(id);
+                return elem;
+            } else return false;
+        }
+    };
+
+    /**
+     * Helper to retieve the elem on which an event was triggered
+     * @param evt
+     * @returns {HTMLHtmlElement}
+     */
+    var target = function (evt) {
+        return evt.target || evt.srcElement;
+    };
 
     /**
      * Process options retrieved from grunt.
@@ -59,7 +84,7 @@
      * @param evt
      */
     var scrollListener = function (evt) {
-        var scrollTop = document.getScroll()[1];
+        var scrollTop = document.getScroll()[1]; // Get y position of scroll
         if (!ghost) {
             ghost.scrollTop = scrollTop[0];
         } else {
@@ -89,7 +114,7 @@
     var inputFocusCallback = function(evt) {
         var targetElem = target(evt);
         socket.emit("input:focus", { id: targetElem.id }); // Todo - Is this needed?
-        if (targetElem.type === "text") {
+        if (targetElem.type === "text" || targetElem.type === "textarea") {
             targetElem[ghost.eventListener](ghost.prefix+"keyup", keyupCallback, false);
         }
     };
@@ -99,16 +124,17 @@
      * @param evt
      */
     var keyupCallback = function (evt) {
-        socket.emit("input:type", { id: evt.target.id, value: evt.target.value });
+        var elem = target(evt);
+        socket.emit("input:type", { id: elem.id, value: elem.value });
     };
 
     /**
      * Watch for input focus on form element
      */
     var inputBlurCallback = function(evt) {
-        if (evt.target.type === "text") {
-//            target(evt).
-//            evt.target.removeEventListener("keyup");
+        var targetElem = target(evt);
+        if (targetElem.type === "text") {
+            targetElem[ghost.removeEventListener]("keyup");
         }
     };
 
@@ -123,6 +149,15 @@
         for (var i = 0, n = elems.length; i < n; i += 1) {
             elems[i][ghost.eventListener](ghost.prefix+event, callback, false);
         }
+    };
+
+    /**
+     * Select Box changes
+     * @param evt
+     */
+    var selectChangeCallback = function(evt) {
+        var targetElem = target(evt);
+        socket.emit("input:select", { id: targetElem.id, value: targetElem.value });
     };
 
     /**
@@ -141,11 +176,51 @@
             addEvents(links, "click", clickCallback);
         }
 
-        // Form Filling
-        var inputs = document.getElementsByTagName("input");
-        addEvents(inputs, "focus", inputFocusCallback);
-        addEvents(inputs, "blur", inputBlurCallback);
+        if (ghostMode.forms) {
+            // Form Filling
+            var inputs = document.getElementsByTagName("input");
+            addEvents(inputs, "focus", inputFocusCallback);
+            addEvents(inputs, "blur", inputBlurCallback);
 
+            var textAreas = document.getElementsByTagName("textarea");
+            addEvents(textAreas, "focus", inputFocusCallback);
+            addEvents(textAreas, "blur", inputBlurCallback);
+
+            var selects = document.getElementsByTagName("select");
+            addEvents(selects, "change", selectChangeCallback);
+        }
+
+
+    };
+
+    /**
+     * Walk backwards through the dom to find the clicked links href value in
+     * ie7/8
+     * @param {HTMLHtmlElement} elem
+     * @param {number} parentLimit
+     * @returns {*}
+     */
+    var getParentHref = function(elem, parentLimit) {
+
+        var getHref = function (elem) {
+            if (elem.parentNode.tagName === "A") {
+                return elem.parentNode.href
+            } else {
+                return elem.parentNode;
+            }
+        };
+
+        var looperElem;
+        var currentElem = elem;
+        for (var i = 0; i < parentLimit; i += 1) {
+            looperElem = getHref(currentElem);
+            if (typeof looperElem === "string") {
+                return looperElem;
+            } else {
+                currentElem = looperElem;
+            }
+        }
+        return false;
     };
 
     /**
@@ -155,8 +230,22 @@
     var clickCallback = function (e) {
 
         var elem = e.target || e.srcElement;
-        socket.emit("location", { url: elem.href });
+        var tagName = elem.tagName;
+        var href;
 
+        if (this.href) { // Catch the href
+            href = this.href;
+        } else {
+            if (tagName === "A") {
+                href = elem.href;
+            } else {
+                // IE 7/8 find the parent Anchor element
+                href = getParentHref(elem, 5);
+            }
+        }
+        if (href) {
+            socket.emit("location", { url: href });
+        }
     };
 
 
@@ -247,7 +336,6 @@
         if (justUrl) {
             currentSrc = justUrl;
         }
-
         elem[attr] = currentSrc + "?rel=" + new Date().getTime();
     }
 

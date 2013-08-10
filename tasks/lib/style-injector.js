@@ -136,13 +136,23 @@ var updateScrollPosition = function (client, data) {
 };
 
 /**
- * Update scroll position of browsers.
+ * Update a text input;
  * @param client
  * @param data
  */
 var updateFormField = function (client, data) {
     client.broadcast.emit("input:update", { id: data.id, value: data.value });
 };
+
+/**
+ * Update a select element
+ * @param client
+ * @param data
+ */
+var updateSelectField = function (client, data) {
+    client.broadcast.emit("input:update", { id: data.id, value: data.value });
+};
+
 /**
  * If ghostMode was enabled, inform all browsers when any of them changes URL.
  * @param io
@@ -157,10 +167,13 @@ var setLocationTracking = function (io, client, options) {
             updateLocations(io, data.url);
         });
         client.on("scroll", function (data) {
-            updateScrollPosition(client, data)
+            updateScrollPosition(client, data);
         });
         client.on("input:type", function (data) {
-            updateFormField(client, data)
+            updateFormField(client, data);
+        });
+        client.on("input:select", function (data) {
+            updateSelectField(client, data);
         });
     }
 };

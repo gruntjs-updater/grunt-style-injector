@@ -44,7 +44,8 @@ module.exports = function (grunt) {
 //                    host: "192.168.0.7",
                     ghostMode: {
                         scroll: true,
-                        links: true
+                        links: true,
+                        forms: true
                     }
                 }
             }

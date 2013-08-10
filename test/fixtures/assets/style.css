@@ -1,5 +1,8 @@
 body {
     background: white;
-    color: blue;
+    color: black;
 }
-
+.container {
+    margin: 0 auto;
+    width: 320px;
+}
