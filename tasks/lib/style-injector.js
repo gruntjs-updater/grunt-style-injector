@@ -153,6 +153,17 @@ var updateSelectField = function (client, data) {
     client.broadcast.emit("input:update", { id: data.id, value: data.value });
 };
 
+var updateRadioField = function (client, data) {
+    client.broadcast.emit("input:update:radio", { id: data.id, value: data.value });
+};
+
+var updateCheckboxField = function (client, data) {
+    client.broadcast.emit("input:update:checkbox", { id: data.id, checked: data.checked });
+};
+
+var submitForm = function (client, data) {
+    client.broadcast.emit("form:submit", { id: data.id });
+};
 /**
  * If ghostMode was enabled, inform all browsers when any of them changes URL.
  * @param io
@@ -167,6 +178,7 @@ var setLocationTracking = function (io, client, options) {
             updateLocations(io, data.url);
         });
         client.on("scroll", function (data) {
+            console.log('scroll event', client.id);
             updateScrollPosition(client, data);
         });
         client.on("input:type", function (data) {
@@ -175,6 +187,16 @@ var setLocationTracking = function (io, client, options) {
         client.on("input:select", function (data) {
             updateSelectField(client, data);
         });
+        client.on("input:radio", function (data) {
+            updateRadioField(client, data);
+        });
+        client.on("input:checkbox", function (data) {
+            updateCheckboxField(client, data);
+        });
+        client.on("form:submit", function (data) {
+            submitForm(client, data);
+        });
+
     }
 };
 /**

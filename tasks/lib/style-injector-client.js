@@ -8,7 +8,32 @@
     ghost.removeEventListener = (window.removeEventListener) ? "removeEventListener" : "detachEvent";
     ghost.prefix = (window.addEventListener) ? "" : "on";
     ghost.cache = {};
+    var options = {
+        tagNames: {
+            "css": "link",
+            "jpg": "img",
+            "png": "img",
+            "svg": "img",
+            "gif": "img",
+            "js": "script"
+        },
+        attrs: {
+            "link": "href",
+            "img": "src",
+            "script": "src"
+        }
+    };
 
+    /**
+     * Process options on connection
+     */
+    socket.on("connection", function (options) {
+        processOptions(options);
+    });
+
+    /**
+     * Reload event (refresh or inject)
+     */
     socket.on('reload', function (data) {
         if (data) {
             if (data.url) {
@@ -19,25 +44,56 @@
         }
     });
 
+    /**
+     * Update location of all browsers
+     */
     socket.on('location:update', function (data) {
         if (data.url) {
             window.location = data.url;
         }
     });
 
+    /**
+     * Update window scroll position
+     */
     socket.on("scroll:update", function (data) {
         ghost.disabled = true;
         window.scrollTo(0, data.position);
     });
 
+    /**
+     * Update an input field.
+     */
     socket.on("input:update", function (data) {
         ghost.disabled = true;
         var elem = checkCache(data.id);
         elem.value = data.value;
     });
 
-    socket.on("connection", function (options) {
-        processOptions(options);
+    /**
+     * Update an input field.
+     */
+    socket.on("input:update:radio", function (data) {
+        ghost.disabled = true;
+        var elem = checkCache(data.id);
+        elem.checked = true;
+    });
+
+    /**
+     * Update checkboxes.
+     */
+    socket.on("input:update:checkbox", function (data) {
+        ghost.disabled = true;
+        var elem = checkCache(data.id);
+        elem.checked = data.checked;
+    });
+
+    /**
+     * Submit a form.
+     */
+    socket.on("form:submit", function (data) {
+        ghost.disabled = true;
+        document.forms[data.id].submit();
     });
 
     /**
@@ -45,7 +101,7 @@
      * @param {string} id
      * @returns {boolean|HTMLElement}
      */
-    var checkCache = function (id) {
+    function checkCache(id) {
         var elem;
         if (ghost.cache[id]) {
             return ghost.cache[id].elem;
@@ -57,53 +113,64 @@
                 return elem;
             } else return false;
         }
-    };
+    }
 
     /**
-     * Helper to retieve the elem on which an event was triggered
+     * Helper to retrieve the elem on which an event was triggered
      * @param evt
      * @returns {HTMLHtmlElement}
      */
-    var target = function (evt) {
+    function target(evt) {
         return evt.target || evt.srcElement;
-    };
+    }
 
     /**
      * Process options retrieved from grunt.
      * @param options
      */
-    var processOptions = function (options) {
+    function processOptions(options) {
         if (options.ghostMode) {
             initGhostMode(options.ghostMode);
         }
         ghost.id = options.id;
-    };
+    }
 
     /**
      * Attempt to keep browser scroll Positions in check.
      * @param evt
      */
-    var scrollListener = function (evt) {
+    function scrollListener(evt) {
+
         var scrollTop = document.getScroll()[1]; // Get y position of scroll
-        if (!ghost) {
+        var newScroll = new Date().getTime();
+
+        if (!ghost.lastScroll) {
             ghost.scrollTop = scrollTop[0];
-        } else {
+            ghost.lastScroll = new Date().getTime();
+        }
+
+        if (newScroll > ghost.lastScroll + 50) { // throttle scroll events
             if (!ghost.disabled) {
+                ghost.lastScroll = newScroll;
                 socket.emit("scroll", { pos: scrollTop, ghostId: ghost.id });
             }
-            ghost.scrollTop = scrollTop;
         }
-        ghost.disabled = false;
-    };
 
-    document.getScroll= function(){
-        if(window.pageYOffset!= undefined){
+        ghost.disabled = false;
+    }
+
+    /**
+     * Get scrollTop of window (cross-browser)
+     * @returns {Array}
+     */
+    document.getScroll = function () {
+        if (window.pageYOffset != undefined) {
             return [pageXOffset, pageYOffset];
         }
-        else{
-            var sx, sy, d= document, r= d.documentElement, b= d.body;
-            sx= r.scrollLeft || b.scrollLeft || 0;
-            sy= r.scrollTop || b.scrollTop || 0;
+        else {
+            var sx, sy, d = document, r = d.documentElement, b = d.body;
+            sx = r.scrollLeft || b.scrollLeft || 0;
+            sy = r.scrollTop || b.scrollTop || 0;
             return [sx, sy];
         }
     };
@@ -111,32 +178,32 @@
     /**
      * Watch for input focus on form element
      */
-    var inputFocusCallback = function(evt) {
+    function inputFocusCallback(evt) {
         var targetElem = target(evt);
-        socket.emit("input:focus", { id: targetElem.id }); // Todo - Is this needed?
+        socket.emit("input:focus", { id: targetElem.id }); // Todo - Is this even needed?
         if (targetElem.type === "text" || targetElem.type === "textarea") {
-            targetElem[ghost.eventListener](ghost.prefix+"keyup", keyupCallback, false);
+            targetElem[ghost.eventListener](ghost.prefix + "keyup", keyupCallback, false);
         }
-    };
+    }
 
     /**
-     * Keyup Call back - inform all browsers
+     * Key-up Call back - inform all browsers
      * @param evt
      */
-    var keyupCallback = function (evt) {
+    function keyupCallback(evt) {
         var elem = target(evt);
         socket.emit("input:type", { id: elem.id, value: elem.value });
-    };
+    }
 
     /**
      * Watch for input focus on form element
      */
-    var inputBlurCallback = function(evt) {
+    function inputBlurCallback(evt) {
         var targetElem = target(evt);
-        if (targetElem.type === "text") {
+        if (targetElem.type === "text" || targetElem.type === "textarea") {
             targetElem[ghost.removeEventListener]("keyup");
         }
-    };
+    }
 
 
     /**
@@ -145,29 +212,98 @@
      * @param event
      * @param callback
      */
-    var addEvents = function (elems, event, callback) {
+    function addEvents(elems, event, callback) {
         for (var i = 0, n = elems.length; i < n; i += 1) {
-            elems[i][ghost.eventListener](ghost.prefix+event, callback, false);
+            elems[i][ghost.eventListener](ghost.prefix + event, callback, false);
         }
-    };
+    }
 
     /**
      * Select Box changes
      * @param evt
      */
-    var selectChangeCallback = function(evt) {
+    function selectChangeCallback(evt) {
         var targetElem = target(evt);
         socket.emit("input:select", { id: targetElem.id, value: targetElem.value });
-    };
+    }
+
+    /**
+     * Radio button change callback
+     * @param evt
+     */
+    function radioChangeCallback(evt) {
+        var targetElem = target(evt);
+        socket.emit("input:radio", { id: targetElem.id, value: targetElem.value });
+    }
+
+    /**
+     *
+     * @param evt
+     */
+    function checkboxChangeCallback(evt) {
+        var targetElem = target(evt);
+        socket.emit("input:checkbox", { id: targetElem.id, checked: targetElem.checked });
+    }
+
+    /**
+     * force ie7/8 to blur when radio inputs clicked
+     * @param evt
+     */
+    function inputBlurEvent(evt) {
+        this.blur();
+        this.focus();
+    }
+
+    /**
+     * Submit a form.
+     * @param evt
+     */
+    function formSubmitCallback(evt) {
+        if (!ghost.disabled) {
+            var targetElem = target(evt);
+            socket.emit("form:submit", { id: targetElem.id });
+        }
+    }
+
+    /**
+     *
+     * @returns {{texts: Array, radios: Array, checkboxes: Array}}
+     */
+    function getInputs() {
+        var inputs = document.getElementsByTagName("input");
+
+        var texts = [];
+        var radios = [];
+        var checkboxes = [];
+
+        for (var i = 0, n = inputs.length; i < n; i += 1) {
+            if (inputs[i].type === "text") {
+                texts.push(inputs[i]);
+            }
+            if (inputs[i].type === "radio") {
+                radios.push(inputs[i]);
+            }
+            if (inputs[i].type === "checkbox") {
+                checkboxes.push(inputs[i]);
+            }
+        }
+
+        return {
+            texts: texts,
+            radios: radios,
+            checkboxes: checkboxes
+        }
+    }
+
 
     /**
      * Initi Ghost mode
      */
-    var initGhostMode = function (ghostMode) {
+    function initGhostMode(ghostMode) {
 
         // Scroll event
         if (ghostMode.scroll) {
-            window[ghost.eventListener](ghost.prefix+"scroll", scrollListener, false);
+            window[ghost.eventListener](ghost.prefix + "scroll", scrollListener, false);
         }
 
         if (ghostMode.links) {
@@ -177,21 +313,36 @@
         }
 
         if (ghostMode.forms) {
-            // Form Filling
-            var inputs = document.getElementsByTagName("input");
-            addEvents(inputs, "focus", inputFocusCallback);
-            addEvents(inputs, "blur", inputBlurCallback);
 
+            var inputs = getInputs();
+
+            // Radio button events
+            addEvents(inputs.radios, "click", inputBlurEvent);
+            addEvents(inputs.radios, "change", radioChangeCallback);
+
+            // Text input events
+            addEvents(inputs.texts, "focus", inputFocusCallback);
+            addEvents(inputs.texts, "blur", inputBlurCallback);
+
+            // Checkbox events
+            addEvents(inputs.checkboxes, "click", inputBlurEvent);
+            addEvents(inputs.checkboxes, "change", checkboxChangeCallback);
+
+            // Text area Events
             var textAreas = document.getElementsByTagName("textarea");
             addEvents(textAreas, "focus", inputFocusCallback);
             addEvents(textAreas, "blur", inputBlurCallback);
 
+            // Select Box Events
             var selects = document.getElementsByTagName("select");
             addEvents(selects, "change", selectChangeCallback);
+
+            // Submit Event
+            var forms = document.getElementsByTagName("form");
+            addEvents(forms, "submit", formSubmitCallback);
+
         }
-
-
-    };
+    }
 
     /**
      * Walk backwards through the dom to find the clicked links href value in
@@ -200,7 +351,7 @@
      * @param {number} parentLimit
      * @returns {*}
      */
-    var getParentHref = function(elem, parentLimit) {
+    function getParentHref(elem, parentLimit) {
 
         var getHref = function (elem) {
             if (elem.parentNode.tagName === "A") {
@@ -221,13 +372,13 @@
             }
         }
         return false;
-    };
+    }
 
     /**
      * Click Call Back
      * @param e
      */
-    var clickCallback = function (e) {
+    function clickCallback(e) {
 
         var elem = e.target || e.srcElement;
         var tagName = elem.tagName;
@@ -246,28 +397,9 @@
         if (href) {
             socket.emit("location", { url: href });
         }
-    };
-
-
-    var options = {
-        tagNames: {
-            "css": "link",
-            "jpg": "img",
-            "png": "img",
-            "svg": "img",
-            "gif": "img",
-            "js": "script"
-        },
-        attrs: {
-            "link": "href",
-            "img": "src",
-            "script": "src"
-        }
-    };
-
+    }
 
     /**
-     *
      * @param {NodeList} tags - array of
      * @param {string} url
      * @returns {Array}
@@ -336,6 +468,7 @@
         if (justUrl) {
             currentSrc = justUrl;
         }
+
         elem[attr] = currentSrc + "?rel=" + new Date().getTime();
     }
 
