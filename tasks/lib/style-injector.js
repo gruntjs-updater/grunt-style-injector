@@ -115,55 +115,62 @@ var serveCustomScript = function (hostIp, socketIoPort, scriptPort) {
     http.createServer(app).listen(scriptPort);
 };
 
-
 /**
- *
- * @param ioInstance
- * @param url
+ * @param data
  */
-var updateLocations = function (ioInstance, url) {
-    log(messages.location(url), false);
-    ioInstance.sockets.emit("location:update", { url: url });
+var updateLocations = function (data) {
+    log(messages.location(data.url), false);
+    this.broadcast.emit("location:update", { url: data.url });
 };
 
 /**
  * Update scroll position of browsers.
- * @param client
  * @param data
  */
-var updateScrollPosition = function (client, data) {
-    client.broadcast.emit("scroll:update", { position: data.pos, ghostId: data.ghostId });
+var updateScrollPosition = function (data) {
+    this.broadcast.emit("scroll:update", { position: data.pos, ghostId: data.ghostId });
 };
 
 /**
  * Update a text input;
- * @param client
  * @param data
  */
-var updateFormField = function (client, data) {
-    client.broadcast.emit("input:update", { id: data.id, value: data.value });
+var updateFormField = function (data) {
+    this.broadcast.emit("input:update", { id: data.id, value: data.value });
 };
 
 /**
  * Update a select element
- * @param client
  * @param data
  */
-var updateSelectField = function (client, data) {
-    client.broadcast.emit("input:update", { id: data.id, value: data.value });
+var updateSelectField = function (data) {
+    this.broadcast.emit("input:update", { id: data.id, value: data.value });
 };
 
-var updateRadioField = function (client, data) {
-    client.broadcast.emit("input:update:radio", { id: data.id, value: data.value });
+/**
+ * Update Radio Field
+ * @param data
+ */
+var updateRadioField = function (data) {
+    this.broadcast.emit("input:update:radio", { id: data.id, value: data.value });
 };
 
-var updateCheckboxField = function (client, data) {
-    client.broadcast.emit("input:update:checkbox", { id: data.id, checked: data.checked });
+/**
+ * Update Checkbox
+ * @param data
+ */
+var updateCheckboxField = function (data) {
+    this.broadcast.emit("input:update:checkbox", { id: data.id, checked: data.checked });
 };
 
-var submitForm = function (client, data) {
-    client.broadcast.emit("form:submit", { id: data.id });
+/**
+ * Submit a form
+ * @param data
+ */
+var submitForm = function (data) {
+    this.broadcast.emit("form:submit", { id: data.id });
 };
+
 /**
  * If ghostMode was enabled, inform all browsers when any of them changes URL.
  * @param io
@@ -174,34 +181,19 @@ var setLocationTracking = function (io, client, options) {
 
     // remember the context of the client that emitted the event.
     if (options.ghostMode) {
-        client.on("location", function (data) {
-            updateLocations(io, data.url);
-        });
-        client.on("scroll", function (data) {
-            console.log('scroll event', client.id);
-            updateScrollPosition(client, data);
-        });
-        client.on("input:type", function (data) {
-            updateFormField(client, data);
-        });
-        client.on("input:select", function (data) {
-            updateSelectField(client, data);
-        });
-        client.on("input:radio", function (data) {
-            updateRadioField(client, data);
-        });
-        client.on("input:checkbox", function (data) {
-            updateCheckboxField(client, data);
-        });
-        client.on("form:submit", function (data) {
-            submitForm(client, data);
-        });
-
+        client.on("location", updateLocations);
+        client.on("scroll", updateScrollPosition);
+        client.on("input:type", updateFormField);
+        client.on("input:select", updateSelectField);
+        client.on("input:radio", updateRadioField);
+        client.on("input:checkbox", updateCheckboxField);
+        client.on("form:submit", submitForm);
     }
 };
+
 /**
  * Method exposed to Grunt Task
- * @param {array} files - relative file paths
+ * @param {Array} files - relative file paths
  * @param {object} gruntOptions - merged default options & user options
  * @param {function} done - Kill the grunt task on errors
  */
@@ -215,7 +207,7 @@ module.exports.watch = function (files, gruntOptions, done) {
          * Find an empty port for SOCKET.IO
          * @param callback
          */
-        function (callback) {
+                function (callback) {
             portScanner.findAPortNotInUse(3000, 3020, 'localhost', function (error, port) {
                 callback(null, port);
             });
@@ -264,11 +256,11 @@ module.exports.watch = function (files, gruntOptions, done) {
             callback(null, 'two');
         }
     ],
-    function (err, results) {
-        if (err) {
-            done();
-        }
-    });
+            function (err, results) {
+                if (err) {
+                    done();
+                }
+            });
 };
 
 /**
