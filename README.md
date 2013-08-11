@@ -18,7 +18,7 @@ It can also be used in **Ghost-Mode** where all connected browers/devices will t
 
 **scroll** - When you scroll a website in one browser, all the others will follow suit. (very useful when developing with multiple monitors/devices )
 
-**Forms** - When you fill out a form, all connected browsers will populate their forms with what you type in real-time. (currently working for
+**forms** - When you fill out a form, all connected browsers will populate their forms with what you type in real-time. (currently working for
 text-inputs, textareas, selects, radios & checkboxes)
 
 
@@ -154,7 +154,7 @@ grunt.initConfig({
 The power of Style-Injector comes when you have multiple devices/browsers connected. To do this, you use your networks IP instead of `localhost`. For example, you may have a php/node/mamp server running at `localhost:8000`. Swap out the localhost part for something like `192.168.0.1` (find yours by running `ifconfig` on Mac, `ipconfig` on Windows) and you can connect to **192.168.0.1:8000**. Now, with Style-Injector running, you can have as many browsers/devices connected and they will all live-update when you change a file.
 
 ###ghostMode (default: *false*) **Experimental**
-There are currently two options for **ghostMode** `scroll` and `links`.
+There are currently three options for **ghostMode** `scroll`, `links` & `forms`
 
 - Scroll. Enable this and your connected browsers will attempt to keep in sync
 - Links. Enable this and your connected browsers will follow each other around. (note: this could be problematic if you already have click events
