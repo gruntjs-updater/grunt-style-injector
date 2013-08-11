@@ -18,6 +18,9 @@ It can also be used in **Ghost-Mode** where all connected browers/devices will t
 
 **scroll** - When you scroll a website in one browser, all the others will follow suit. (very useful when developing with multiple monitors/devices )
 
+**Forms** - When you fill out a form, all connected browsers will populate their forms with what you type in real-time. (currently working for
+text-inputs, textareas, selects, radios & checkboxes)
+
 
 ##Install
 
@@ -156,6 +159,7 @@ There are currently two options for **ghostMode** `scroll` and `links`.
 - Scroll. Enable this and your connected browsers will attempt to keep in sync
 - Links. Enable this and your connected browsers will follow each other around. (note: this could be problematic if you already have click events
 on `<a>` elements. It's designed to just make it easy to view multiple pages in the same site and have all browsers keep in sync while in development.
+- Forms Enable this and your connected browsers will keep all form inputs in sync
 
 ```js
 grunt.initConfig({
@@ -167,7 +171,8 @@ grunt.initConfig({
             host : "192.168.0.1",
             ghostMode: {
                 scroll: true,
-                links: true
+                links: true,
+                forms: true
             }
         },
     },
