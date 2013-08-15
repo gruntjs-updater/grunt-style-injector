@@ -10,9 +10,11 @@ If you haven't used [Grunt](http://gruntjs.com/) before, be sure to check out th
 ##About
 **Live CSS-injecting with NO page refresh**
 
+[Demo Video](http://www.youtube.com/watch?v=5yNteaXFY-4)
+
 This plugin gives you live style-injecting into all browsers. It also provides live-reloading of files that cannot be injected (php, html etc). I was inspired to build this because the popular live-reload plugin does not work with IE 7 & 8. *This one does!*
 
-It can also be used in **Ghost-Mode** where all connected browers/devices will try to keep in sync. Ghost-Mode currently supports two options:
+It can also be used in **Ghost-Mode** where all connected browers/devices will try to keep in sync. Ghost-Mode currently supports three options:
 
 **links** - When you click a link in one browser (say, Chrome on desktop), all of the other browsers you have open will navigate to the same link.
 
