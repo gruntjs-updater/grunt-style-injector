@@ -22,7 +22,12 @@ module.exports = function (grunt) {
                 jshintrc: '.jshintrc'
             }
         },
-
+        uglify: {
+            files: {
+                src: "tasks/lib/style-injector-client.js",
+                dest: "tasks/lib/style-injector-client.min.js"
+            }
+        },
         // Before generating any new files, remove any previously-created files.
         clean: {
             tests: ['tmp']
@@ -41,12 +46,14 @@ module.exports = function (grunt) {
                     urlTransforms: {
                         remove: "test/fixtures/"
                     },
-//                    host: "192.168.0.7",
                     ghostMode: {
                         scroll: true,
                         links: true,
                         forms: true
                     }
+//                    server: {
+//                        baseDir: "test/fixtures"
+//                    }
                 }
             }
         },
@@ -62,6 +69,8 @@ module.exports = function (grunt) {
     // These plugins provide necessary tasks.
     grunt.loadNpmTasks('grunt-contrib-nodeunit');
     grunt.loadNpmTasks('grunt-contrib-watch');
+    grunt.loadNpmTasks('grunt-sass');
+    grunt.loadNpmTasks('grunt-contrib-uglify');
 
     // Whenever the "test" task is run, first clean the "tmp" dir, then run this
     // plugin's task(s), then test the result.
