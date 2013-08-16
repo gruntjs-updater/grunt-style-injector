@@ -2,42 +2,17 @@ var portScanner = require('portscanner');
 var async = require('async');
 var chokidar = require('chokidar');
 var _ = require("lodash");
-var clc = require("cli-color");
 var fs = require("fs");
 var connect = require("connect");
 var http = require("http");
-
 var UAParser = require('ua-parser-js');
-var parser = new UAParser();
+var messages = require('./messages');
+var loadSnippet = require('./loadSnippet');
 
+var parser = new UAParser();
 var options;
 
-var scriptData = fs.readFileSync(__dirname + '/style-injector-client.js', "UTF-8");
-
-var messages = {
-    connection: function (browser) {
-        return clc.cyan("Browser Connected! (" + browser.name + ", version: " + browser.version + ")");
-    },
-    init: function (hostIp, socketIoPort, scriptPort) {
-        return clc.yellow('\n\nAll Set Up! Now copy & paste this snippet just before the closing </body> tag in your website.\n\n') +
-                clc.magenta("<script src='http://" + hostIp + ":" + socketIoPort + "/socket.io/socket.io.js'></script>\n") +
-                clc.magenta("<script src='http://" + hostIp + ":" + scriptPort + "/style-injector-client.js'></script>\n\n");
-    },
-    fileChanged: function (path) {
-        return clc.magenta("File Changed: " + clc.green(path));
-    },
-    browser: {
-        reload: function () {
-            return clc.yellow("Reloading all connected browsers...");
-        },
-        inject: function () {
-            return clc.yellow("Injecting file into all connected browsers...");
-        }
-    },
-    location: function (url) {
-        return clc.yellow("Link clicked! Redirecting all browser to " + clc.green(url));
-    }
-};
+var scriptData = fs.readFileSync(__dirname + messages.clientScript, "UTF-8");
 
 /**
  * Check if user doesn't want a verbose console.
@@ -101,19 +76,61 @@ var changeFile = function (path, ioInstance) {
  * @param {string} hostIp
  * @param {number} socketIoPort
  * @param {number} scriptPort
+ * @param {object} options (grunt options)
  */
-var serveCustomScript = function (hostIp, socketIoPort, scriptPort) {
+var serveCustomScript = function (hostIp, socketIoPort, scriptPort, options, grunt) {
+
+    var app, baseUrl;
+
+    loadSnippet.setVars(hostIp, socketIoPort, scriptPort);
 
     // Intercept request for custom script, inject the info about socketIO
-    var app = connect().use("/style-injector-client.js", function (req, res, next) {
-
+    var modifySnippet = function (req, res) {
         res.setHeader("Content-Type", "text/javascript");
-        res.end(scriptData.replace("REMOVE", hostIp + ":" + socketIoPort));
+        res.end( "var socket = io.connect('" + hostIp + ":" + socketIoPort +"');" + scriptData);
+    };
 
-    });
+    if (!options.server) {
+        app = connect().use(messages.clientScript, modifySnippet);
+    } else {
+
+        if (options.server.baseDir[0] === "/") {
+            grunt.fail.fatal(messages.invalidBaseDir());
+        }
+
+        baseDir = options.server.baseDir || "./"; // Serve root directory if no baseDir is specified
+
+        app = connect()
+                .use(messages.clientScript, modifySnippet)
+                .use(loadSnippet.middleWare)
+                .use(connect.static(baseDir));
+    }
 
     http.createServer(app).listen(scriptPort);
+
+    // Show Message with either Snippet info, or with server info
+    if (options.server) {
+        log(messages.initServer(hostIp, scriptPort, getBaseDir(baseDir), options), true);
+    } else {
+        log(messages.init(hostIp, socketIoPort, scriptPort), true);
+    }
 };
+
+function getBaseDir(baseDir) {
+
+    if (baseDir === "./") {
+        return process.cwd();
+    }
+
+    if (baseDir[0] === "/") {
+        return process.cwd() + baseDir;
+    } else {
+        if (baseDir[0] === "." && baseDir[1] === "/"){
+            return process.cwd() + baseDir.replace(".", "");
+        }
+        return process.cwd() + "/" + baseDir;
+    }
+}
 
 /**
  * @param data
@@ -197,7 +214,7 @@ var setLocationTracking = function (io, client, options) {
  * @param {object} gruntOptions - merged default options & user options
  * @param {function} done - Kill the grunt task on errors
  */
-module.exports.watch = function (files, gruntOptions, done) {
+module.exports.watch = function (files, gruntOptions, done, grunt) {
 
     var io;
     options = gruntOptions;
@@ -245,10 +262,7 @@ module.exports.watch = function (files, gruntOptions, done) {
         function (io, hostIp, socketIoPort, scriptPort, callback) {
 
             // Serve Custom Client-side JS
-            serveCustomScript(hostIp, socketIoPort, scriptPort);
-
-            // Show Snippet info for copy & paste
-            log(messages.init(hostIp, socketIoPort, scriptPort), true);
+            serveCustomScript(hostIp, socketIoPort, scriptPort, options, grunt);
 
             // Watch the files
             watchFiles(files, io);

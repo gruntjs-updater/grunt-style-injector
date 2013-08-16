@@ -1,7 +1,4 @@
-(function (io) {
-
-    var socket = io.connect('http://REMOVE');
-
+(function () {
     var ghost = {};
     ghost.id = Math.random();
     ghost.eventListener = (window.addEventListener) ? "addEventListener" : "attachEvent";
@@ -472,4 +469,4 @@
         elem[attr] = currentSrc + "?rel=" + new Date().getTime();
     }
 
-}(io));
+}());
