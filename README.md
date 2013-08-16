@@ -10,11 +10,9 @@ If you haven't used [Grunt](http://gruntjs.com/) before, be sure to check out th
 ##About
 **Live CSS-injecting with NO page refresh**
 
-[Demo Video](http://www.youtube.com/watch?v=5yNteaXFY-4)
-
 This plugin gives you live style-injecting into all browsers. It also provides live-reloading of files that cannot be injected (php, html etc). I was inspired to build this because the popular live-reload plugin does not work with IE 7 & 8. *This one does!*
 
-It can also be used in **Ghost-Mode** where all connected browers/devices will try to keep in sync. Ghost-Mode currently supports three options:
+It can also be used in **Ghost-Mode** where all connected broswers/devices will try to keep in sync. Ghost-Mode currently supports three options:
 
 **links** - When you click a link in one browser (say, Chrome on desktop), all of the other browsers you have open will navigate to the same link.
 
@@ -37,13 +35,28 @@ Once the plugin has been installed, it may be enabled inside your Gruntfile with
 grunt.loadNpmTasks('grunt-style-injector');
 ```
 ##Config
-Here's an example of the simplest configuration possible (options are explained below)
+Here's an example of the simplest configuration possible. This will give you a HTML snippet to paste into your website & will you allow you to work with any server setup (such as MAMP,  WAMP or anything else). So if you are working on a Wordpress website, for example, this is the option for you.
 
-```js
+```
 styleinjector: {
     files: {
         src : 'assets/css/style.css'
     },
+},
+```
+## + Server
+If you want the zero-effort version, just include the `server` option and provide the base directory to your public files. Using this option does NOT require the HTML snippet as the Style Injector will inject it automatically into the pages it serves for you.
+
+```
+styleinjector: {
+    files: {
+        src : 'assets/css/style.css'
+    },
+    options: {
+    	server: {
+    		baseDir: "app"
+    	}
+    }
 },
 ```
 
@@ -51,7 +64,7 @@ styleinjector: {
 
 `grunt styleinjector`
 
-When you run this command you'll receive a html snippet in the command line, paste this into your website directly before the closing `</body>` tag & you'll be good to go.
+When you've used one of the configs from above, run this command from the terminal and you'll be good to go (if you are using the built-in server). If you are not using the built in server, (because your site is on PHP or something else), just grab the HTML snippet from the command line and paste it into your site just before the closing `</body` tag
 
 ##Options
 
@@ -68,7 +81,10 @@ styleinjector: {
         urlTransforms: {
             remove: "test/fixtures/"
         },
-        host: "192.168.0.7"
+        host: "192.168.0.7",
+        server: {
+        	baseDir: "app"
+        }
     },
 },
 ```
@@ -180,7 +196,24 @@ grunt.initConfig({
     },
 });
 ```
+###server (default: *false*)
+Using the `server` option negates the need for the HTML snippet as it will be injected automatically (no browser plugins needed!). Just provide the base directory where you want to serve your files from and you'll be good to go!.
 
+```js
+grunt.initConfig({
+    styleinjector: {
+        files: {
+            src : 'app/assets/css/*.css',
+        },
+        options: {
+            host : "192.168.0.1",
+			server: {
+        		baseDir: "app"
+        	}
+        },
+    },
+});
+```
 
 ##Live Reload
 Style-Injector will, as the name implies, inject CSS into all connected browsers without reloading the page. It even works on VMs running IE 7 & 8! But that's not all it does. It can also live-inject jpg & png files too, as well as perform a hard refresh for JS, PHP, HTML files etc. For example:
@@ -213,3 +246,4 @@ In lieu of a formal styleguide, take care to maintain the existing coding style.
 0.1.1 - Bug fixes release
 0.1.3 - Added initial implentation of Ghost-mode (link)
 0.1.4 - refined ghost-mode and added scroll
+0.1.6 - Added Built-in server with middleware for injecting snippet
