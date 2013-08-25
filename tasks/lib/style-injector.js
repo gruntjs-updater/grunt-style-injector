@@ -104,6 +104,9 @@ var serveCustomScript = function (hostIp, socketIoPort, scriptPort, options, gru
                 .use(messages.clientScript, modifySnippet)
                 .use(loadSnippet.middleWare)
                 .use(connect.static(baseDir));
+
+        var open = require("open");
+        open("http://"+hostIp+":"+scriptPort);
     }
 
     http.createServer(app).listen(scriptPort);

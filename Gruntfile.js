@@ -38,7 +38,10 @@ module.exports = function (grunt) {
         styleinjector: {
             default_options: {
                 files: {
-                    src : 'test/**'
+                    src : [
+                        'test/**',
+                        'test/fixtures/scss/**/*.scss'
+                    ]
                 },
                 options: {
                     watchTask: false,
@@ -50,10 +53,10 @@ module.exports = function (grunt) {
                         scroll: true,
                         links: true,
                         forms: true
+                    },
+                    server: {
+                        baseDir: "test/fixtures"
                     }
-//                    server: {
-//                        baseDir: "test/fixtures"
-//                    }
                 }
             }
         },

@@ -247,3 +247,4 @@ In lieu of a formal styleguide, take care to maintain the existing coding style.
 0.1.3 - Added initial implentation of Ghost-mode (link)
 0.1.4 - refined ghost-mode and added scroll
 0.1.6 - Added Built-in server with middleware for injecting snippet
+0.1.7 - Added 'open' for automatically opening browser when 'server' option is used.
