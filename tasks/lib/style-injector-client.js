@@ -5,6 +5,7 @@
     ghost.removeEventListener = (window.removeEventListener) ? "removeEventListener" : "detachEvent";
     ghost.prefix = (window.addEventListener) ? "" : "on";
     ghost.cache = {};
+    ghost.currentUrl = window.location.href;
     var options = {
         tagNames: {
             "css": "link",
@@ -54,8 +55,11 @@
      * Update window scroll position
      */
     socket.on("scroll:update", function (data) {
-        ghost.disabled = true;
-        window.scrollTo(0, data.position);
+
+        if (data.url === ghost.currentUrl) {
+            ghost.disabled = true;
+            window.scrollTo(0, data.position);
+        }
     });
 
     /**
@@ -149,7 +153,7 @@
         if (newScroll > ghost.lastScroll + 50) { // throttle scroll events
             if (!ghost.disabled) {
                 ghost.lastScroll = newScroll;
-                socket.emit("scroll", { pos: scrollTop, ghostId: ghost.id });
+                socket.emit("scroll", { pos: scrollTop, ghostId: ghost.id, url: ghost.currentUrl });
             }
         }
 

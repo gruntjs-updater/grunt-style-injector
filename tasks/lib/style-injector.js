@@ -148,7 +148,7 @@ var updateLocations = function (data) {
  * @param data
  */
 var updateScrollPosition = function (data) {
-    this.broadcast.emit("scroll:update", { position: data.pos, ghostId: data.ghostId });
+    this.broadcast.emit("scroll:update", { position: data.pos, ghostId: data.ghostId, url: data.url});
 };
 
 /**
