@@ -39,16 +39,12 @@ module.exports = function (grunt) {
             default_options: {
                 files: {
                     src : [
-                        'test/**',
-                        'test/fixtures/scss/**/*.scss'
+                        'test/**'
                     ]
                 },
                 options: {
                     watchTask: false,
                     debugInfo: true,
-                    urlTransforms: {
-                        remove: "test/fixtures/"
-                    },
                     ghostMode: {
                         scroll: true,
                         links: true,

@@ -44,7 +44,7 @@ styleinjector: {
     },
 },
 ```
-## + Server
+## with Connect Server
 If you want the zero-effort version, just include the `server` option and provide the base directory to your public files. Using this option does NOT require the HTML snippet as the Style Injector will inject it automatically into the pages it serves for you.
 
 ```
@@ -78,9 +78,6 @@ styleinjector: {
     options: {
         watchTask: false,
         debugInfo: true,
-        urlTransforms: {
-            remove: "test/fixtures/"
-        },
         host: "192.168.0.7",
         server: {
         	baseDir: "app"
@@ -131,19 +128,11 @@ module.exports = function (grunt) {
 ###debugInfo (default: *true*)
 By default, the task will inform you when a file has been changed & when browsers are connected. This can sometimes cause a lot of output to the console and if you don't want that, set this option to false.
 
-###urlTransforms (default: null)
-Style-Injector works by looking for the changed file-name in the current page & because you need to reference files *relative* to your Gruntfile, there may be parts of the file-path that stop it working. `urlTransforms` allows you to specify parts of the file-path to remove. For example:
-
 ```js
 grunt.initConfig({
     styleinjector: {
         files: {
             src : 'app/assets/css/*.css',
-        },
-        options: {
-            urlTransforms: {
-                remove : "app",
-            },
         },
     },
 });
@@ -153,7 +142,10 @@ grunt.initConfig({
 ```
 
 ###host (default: *null*)
-Style-Injector will try to figure this out for you. But to make absolutely sure it works, you can be specific about your host IP here.
+Style-Injector will attempt to figure out the correct external IP to use on your network. Ocassionally though, it may select
+one that cannot be accessed on any other devices (just the machine you are developing on). If this happens, and you know exactly
+which IP to use on your network, you can plug it in here.
+
 For example:
 
 ```js

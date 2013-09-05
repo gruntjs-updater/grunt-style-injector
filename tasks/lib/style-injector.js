@@ -3,6 +3,7 @@ var async = require('async');
 var chokidar = require('chokidar');
 var _ = require("lodash");
 var fs = require("fs");
+var filePath = require("path");
 var connect = require("connect");
 var http = require("http");
 var UAParser = require('ua-parser-js');
@@ -62,7 +63,7 @@ var changeFile = function (path, ioInstance) {
 
     if (_.contains(options.injectFileTypes, fileExtension)) {
         // try to inject the files.
-        data.assetUrl = transformUrl(path, options.urlTransforms);
+        data.assetUrl = filePath.basename(path);
         data.fileExtention = fileExtension;
         ioInstance.sockets.emit("reload", data);
         log(messages.browser.inject(), false);
@@ -281,21 +282,6 @@ module.exports.watch = function (files, gruntOptions, done, grunt) {
 };
 
 /**
- * Ensure the client receives the correct url for the asset (not the relative path used for watching)
- * @param {string} path
- * @returns {string}
- * @param {object} urlTransforms (prefix, suffix, remove)
- */
-var transformUrl = function (path, urlTransforms) {
-
-    if (urlTransforms.remove) {
-        path = path.replace(urlTransforms.remove, "");
-    }
-
-    return [urlTransforms.prefix, path, urlTransforms.suffix].join("");
-};
-
-/**
  * Get the external HostIp
  * @returns {*}
  */
@@ -322,6 +308,5 @@ var getHostIp = function (options) {
 
 
 // export methods for tests
-module.exports.transformUrl = transformUrl;
 module.exports.getHostIp = getHostIp;
 module.exports.changeFile = changeFile;
