@@ -1,7 +1,7 @@
 {
   "name": "grunt-style-injector",
   "description": "Inject CSS into multiple browsers without reloading the page. Full browser support (back to IE7).",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "homepage": "https://github.com/shakyshane/grunt-style-injector",
   "author": {
     "name": "Shane Osbourne"
