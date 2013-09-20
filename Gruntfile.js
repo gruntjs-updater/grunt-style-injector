@@ -56,6 +56,11 @@ module.exports = function (grunt) {
                 }
             }
         },
+        karma: {
+            unit: {
+                configFile: 'test/karma.conf.js'
+            }
+        },
         // Unit tests.
         nodeunit: {
             tests: ['test/*_test.js']
@@ -70,6 +75,7 @@ module.exports = function (grunt) {
     grunt.loadNpmTasks('grunt-contrib-watch');
     grunt.loadNpmTasks('grunt-sass');
     grunt.loadNpmTasks('grunt-contrib-uglify');
+    grunt.loadNpmTasks('grunt-karma');
 
     // Whenever the "test" task is run, first clean the "tmp" dir, then run this
     // plugin's task(s), then test the result.

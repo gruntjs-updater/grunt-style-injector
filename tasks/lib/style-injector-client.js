@@ -1,4 +1,5 @@
 (function () {
+
     var ghost = {};
     ghost.id = Math.random();
     ghost.eventListener = (window.addEventListener) ? "addEventListener" : "attachEvent";
@@ -6,6 +7,7 @@
     ghost.prefix = (window.addEventListener) ? "" : "on";
     ghost.cache = {};
     ghost.currentUrl = window.location.href;
+
     var options = {
         tagNames: {
             "css": "link",
@@ -372,6 +374,7 @@
                 currentElem = looperElem;
             }
         }
+
         return false;
     }
 
@@ -445,7 +448,7 @@
      */
     function swapFile(url, tagName) {
         var elems = getTags(tagName),
-                attr = options.attrs[tagName];
+            attr = options.attrs[tagName];
 
         if (elems) {
             var match = getMatch(elems, url, attr);
@@ -461,6 +464,7 @@
      * @param attr
      */
     function updateElem(elem, attr) {
+
         var currentSrc = elem[attr];
 
         // test if there's already a timestamp on the url
