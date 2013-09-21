@@ -1,7 +1,14 @@
-(function (window) {
+(function (window, socket) {
+
+    var scope = {
+        options: {
+            ghostMode: false
+        }
+    };
 
     var styleInjector = function () {};
     var styleInjectorActions = function () {};
+    var ghost = function () {};
 
     var options = {
         tagNames: {
@@ -30,18 +37,34 @@
 
         },
         reloadEvent: function (scope, data, actions) {
+
+            var transformedElem;
+
             if (data.url) {
-                actions.reloadBrowser();
+                actions.reloadBrowser(true);
             }
+
             if (data.assetFileName) {
 
-                var tagName = this.getTagName(data.fileExtention);
-                var attr = this.getAttr(tagName);
-                var elems = document.getElementsByTagName(tagName);
-                var elem = this.getMatches(elems, data.assetFileName, attr);
+                try {
+                    if (!data.fileExtension)
+                    {
+                        throw "Not enough info from server to reload"
+                    }
+                    var tagName = this.getTagName(data.fileExtension);
+                    var attr = this.getAttr(tagName);
+                    var elems = document.getElementsByTagName(tagName);
 
-                actions.swapFile(elem, data.assetFileName, attr);
+                    var elem = this.getMatches(elems, data.assetFileName, attr);
+//
+                    transformedElem = actions.swapFile(elem, attr);
+
+                } catch (e) {
+//                    console.log(e);
+                }
             }
+
+            return transformedElem;
         },
         getTagName: function (fileExtention) {
             return options.tagNames[fileExtention];
@@ -77,17 +100,62 @@
             if (justUrl) {
                 currentValue = justUrl[0];
             }
+            var timeStamp = new Date().getTime();
+            elem[attr] = currentValue + "?rel=" + timeStamp;
 
-            elem[attr] = currentValue + "?rel=" + new Date().getTime();
-
-            return elem;
+            return { elem: elem, timeStamp: timeStamp };
         }
     };
 
-    // If in test mode, expose to the window object to make testing possible.
+
+    /**
+     * Ghost Mode
+     * @type {{getScroll: Function}}
+     */
+    ghost.prototype = {
+        getScroll: function () {
+            if (window.pageYOffset != undefined) {
+                return [pageXOffset, pageYOffset];
+            }
+            else {
+                var sx, sy, d = document, r = d.documentElement, b = d.body;
+                sx = r.scrollLeft || b.scrollLeft || 0;
+                sy = r.scrollTop || b.scrollTop || 0;
+                return [sx, sy];
+            }
+        },
+        getScrollTop: function () {
+            return this.getScroll()[1];
+        },
+        setScrollTop: function (ghostMode, y) {
+            ghostMode.enabled = false;
+            window.scrollTo(0, y);
+        },
+        syncScrollTop: function (url, y) {
+            if (url === window.location.href) {
+                this.setScrollTop(y);
+            }
+        },
+        emitEvent: function () {
+
+        }
+    };
+
+
     if (window.__karma__) {
         window.styleInjector = styleInjector;
         window.styleInjectorActions = styleInjectorActions;
+        window.ghost = ghost;
+        socket.on = function () {};
     }
 
-}(window));
+    // Socket IO events
+    socket.on('reload', function (data) {
+        if (data) {
+            styleInjector.prototype.reloadEvent(scope, data, styleInjectorActions.prototype);
+        }
+    });
+
+    // If in test mode, expose to the window object to make testing possible.
+
+}(window, (typeof socket ==="undefined") ? {} : socket));

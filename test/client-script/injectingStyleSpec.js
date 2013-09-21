@@ -10,9 +10,28 @@ describe("Injecting Styles:", function () {
     var siActions;
     var actions;
 
+    var appendsHost = true;
+    (function(){
+       var elem = document.createElement("link");
+        elem.href= "/style.css";
+        if (!/^http:\/\//.test(elem.href)) {
+            appendsHost = false;
+        }
+    })();
+
     var wrapUrl = function (url) {
+        if (!appendsHost) {
+            return url;
+        }
         return "http://" + window.location.host + "/" + url;
     };
+
+    var timeStamp = function (time) {
+        return "?rel=" + time;
+    };
+
+    // For testing if a string has has the timestamp appended;
+    var regex = /(style\.css\?rel=\d+)$/;
 
     beforeEach(function(){
         si = window.styleInjector;
@@ -24,7 +43,6 @@ describe("Injecting Styles:", function () {
 
     describe("Reloading CSS files:", function () {
 
-        var options;
         beforeEach(function(){
             spyOn(actions, "reloadBrowser");
             spyOn(actions, "swapFile");
@@ -36,11 +54,11 @@ describe("Injecting Styles:", function () {
             expect(actions.reloadBrowser).toHaveBeenCalled();
         });
 
-//        it("Can call the swap file method if an assetURL is provided", function () {
-//
-//            methods.reloadEvent(scope, { assetFileName: "style.css", fileExtention: "css" }, actions);
-//            expect(actions.swapFile).toHaveBeenCalledWith("style.css", "link");
-//        });
+        it("Can call the swap file method if an assetURL is provided", function () {
+
+            methods.reloadEvent(scope, { assetFileName: "style.css", fileExtension: "css" }, actions);
+            expect(actions.swapFile).toHaveBeenCalled();
+        });
     });
     describe("Getting Tag names", function () {
 
@@ -84,18 +102,17 @@ describe("Injecting Styles:", function () {
 
     describe("Swapping a file", function () {
 
-        var elem, elem2, elem3, elem4;
-        var regex = /(style\.css\?rel=\d+)$/;
+        var elem, elem2, elem3, elem4, expected;
 
         beforeEach(function(){
             elem = document.createElement("link");
-            elem.href = "/core/style.css";
+            elem.href = "core/style.css";
             elem2 = document.createElement("link");
-            elem2.href = "/core/style.css?rel=23456";
+            elem2.href = "core/style.css?rel=23456";
             elem3 = document.createElement("link");
             elem3.href = "style.css?rel=";
             elem4 = document.createElement("link");
-            elem4.href = "/core/style.css??";
+            elem4.href = "core/style.css??";
         });
 
             describe("when using a regex in tests", function () {
@@ -111,25 +128,59 @@ describe("Injecting Styles:", function () {
         it("can append a rel timestamp to a link that doesn't have one", function () {
 
             var transformedElem = actions.swapFile(elem, "href");
-            expect(regex.test(transformedElem.href)).toBeTruthy();
+            expected = wrapUrl("core/style.css") + timeStamp(transformedElem.timeStamp);
+            expect(transformedElem.elem.href).toBe(expected);
         });
 
         it("can append a rel timestamp to a link that already has one", function () {
 
             var transformedElem = actions.swapFile(elem2, "href");
-            expect(regex.test(transformedElem.href)).toBeTruthy();
+            expected = wrapUrl("core/style.css") + timeStamp(transformedElem.timeStamp);
+            expect(transformedElem.elem.href).toBe(expected);
         });
 
         it("can append a rel timestamp to a mal-formed assetUrl", function () {
 
             var transformedElem = actions.swapFile(elem3, "href");
-            expect(regex.test(transformedElem.href)).toBeTruthy();
+            expected = wrapUrl("style.css") + timeStamp(transformedElem.timeStamp);
+            expect(transformedElem.elem.href).toBe(expected);
         });
 
         it("can append a rel timestamp to a mal-formed assetUrl (2)", function () {
 
             var transformedElem = actions.swapFile(elem4, "href");
-            expect(regex.test(transformedElem.href)).toBeTruthy();
+            expected = wrapUrl("core/style.css") + timeStamp(transformedElem.timeStamp);
+            expect(transformedElem.elem.href).toBe(expected);
+        });
+    });
+
+    describe("swapping a file: e2e:", function () {
+
+        var elem, elem2, transformedElem, expected;
+        beforeEach(function(){
+            elem = document.createElement("link");
+            elem.href = "core/style.css";
+            document.getElementsByTagName('head')[0].appendChild(elem);
+
+            elem2 = document.createElement("link");
+            elem2.href = "core/style.css?rel=123456";
+            document.getElementsByTagName('head')[0].appendChild(elem2);
+
+        });
+
+        it("can swap the url of an asset for one with a timestamp", function () {
+
+            transformedElem = methods.reloadEvent(scope, {assetFileName:"style.css", fileExtension: "css"}, actions);
+            expected = wrapUrl("core/style.css") + timeStamp(transformedElem.timeStamp);
+            expect(transformedElem.elem.href).toBe(expected);
+        });
+
+
+        it("can swap the url of an asset that already has a timestamp", function () {
+
+            transformedElem = methods.reloadEvent(scope, {assetFileName:"style.css", fileExtension: "css"}, actions);
+            expected = wrapUrl("core/style.css") + timeStamp(transformedElem.timeStamp);
+            expect(transformedElem.elem.href).toBe(expected);
         });
     });
 });
