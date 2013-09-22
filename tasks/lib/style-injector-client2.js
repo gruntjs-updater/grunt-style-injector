@@ -3,7 +3,8 @@
 
     var scope = {
         ghostMode: {
-            enabled: true
+            enabled: true,
+            cache: {}
         }
     };
 
@@ -56,8 +57,14 @@
             if (ghostMode.links) {
                 ghost.prototype.initClickEvents(scope, utils, listeners.click);
             }
+
             if (ghostMode.scroll) {
                 ghost.prototype.initEvents(scope, ['scroll'], utils, listeners);
+            }
+
+            if (ghostMode.forms) {
+                var inputs = ghost.prototype.getInputs();
+                ghost.prototype.addBrowserEvents(inputs.texts, "keyup", listeners.keyup, utils);
             }
         },
         /**
@@ -201,6 +208,25 @@
                 this.setScrollTop(scope.ghostMode, y);
             }
         },
+        checkCache: function (cache, id) {
+            var elem;
+            if (cache[id]) {
+                return cache[id].elem;
+            } else {
+                cache.called = (cache.called) ? cache.called += 1 : 1; // for testing
+                elem = document.getElementById(id);
+                if (elem) {
+
+                    cache[id] = {};
+                    cache[id].elem = elem;
+
+                    return elem;
+                } else return false;
+            }
+        },
+        getForCache: function () {
+            return true;
+        },
         /**
          * Add click events to all anchors on page
          * @param {object} scope
@@ -309,6 +335,31 @@
 
             return false;
         },
+        getInputs: function () {
+            var inputs = document.getElementsByTagName("input");
+
+            var texts = [];
+            var radios = [];
+            var checkboxes = [];
+
+            for (var i = 0, n = inputs.length; i < n; i += 1) {
+                if (inputs[i].type === "text") {
+                    texts.push(inputs[i]);
+                }
+                if (inputs[i].type === "radio") {
+                    radios.push(inputs[i]);
+                }
+                if (inputs[i].type === "checkbox") {
+                    checkboxes.push(inputs[i]);
+                }
+            }
+
+            return {
+                texts: texts,
+                radios: radios,
+                checkboxes: checkboxes
+            }
+        },
         listeners: {
             scroll: function () {
                 var scrollTop = ghost.prototype.getScrollTop(); // Get y position of scroll
@@ -336,6 +387,15 @@
                     url: ghost.prototype.getHref(event.target || event.srcElement, this)
                 };
                 ghost.prototype.emitEvent("location", data);
+            },
+            keyup: function (event) {
+                console.log("keyup event fired");
+                var target = event.target || event.srcElement;
+                if (!target.id) return; // don't submit the event if we can't identify the input field.
+                ghost.prototype.emitEvent("input:type", {
+                    id: target.id,
+                    value: target.value
+                });
             }
         }
     };
@@ -369,6 +429,12 @@
             scope.ghostMode.enabled = false;
             window.scrollTo(0, data.position);
         }
+    });
+
+    socket.on("input:update", function (data) {
+        scope.ghostMode.enabled = false;
+        var elem = ghost.prototype.checkCache(scope.ghostMode.cache, data.id);
+        elem.value = data.value;
     });
 
 }(window, (typeof socket ==="undefined") ? {} : socket));
