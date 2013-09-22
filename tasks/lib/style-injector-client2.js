@@ -66,24 +66,27 @@
 
                 // text inputs
                 var inputs = ghost.prototype.getInputs();
-                ghost.prototype.addBrowserEvents(inputs.texts, "keyup", listeners.keyup, utils);
 
-                // radio buttons
-                ghost.prototype.addBrowserEvents(inputs.radios, "click", listeners.forceChange, utils);
-                ghost.prototype.addBrowserEvents(inputs.radios, "change", listeners.radioChange, utils);
+                /**
+                 * [0] = HTMLElements or tag-name as strings
+                 * [1] = browser event name
+                 * [2] = callback function
+                 * @type {Array}
+                 */
+                var items = [
+                    [ inputs.texts, "keyup", "keyup" ],
+                    [ inputs.radios, "click", "forceChange" ],
+                    [ inputs.radios, "change", "radioChange" ],
+                    [ inputs.checkboxes, "click", "forceChange" ],
+                    [ inputs.checkboxes, "change", "checkboxChange" ],
+                    [ "textarea", "keyup", "keyup" ],
+                    [ "select", "change", "selectChange" ],
+                    [ "form", "submit", "formSubmit" ]
+                ];
 
-                // checkboxes buttons
-                ghost.prototype.addBrowserEvents(inputs.checkboxes, "click", listeners.forceChange, utils);
-                ghost.prototype.addBrowserEvents(inputs.checkboxes, "change", listeners.checkboxChange, utils);
-
-                // text areas
-                ghost.prototype.addBrowserEvents("textarea", "keyup", listeners.keyup, utils);
-
-                // select Boxes
-                ghost.prototype.addBrowserEvents("select", "change", listeners.selectChange, utils);
-
-                // forms
-                ghost.prototype.addBrowserEvents("form", "submit", listeners.formSubmit, utils);
+                for (var i = 0, n = items.length; i < n; i += 1) {
+                    ghost.prototype.addBrowserEvents(items[i][0], items[i][1], listeners[items[i][2]], utils);
+                }
             }
         },
         /**
