@@ -77,10 +77,13 @@
                 ghost.prototype.addBrowserEvents(inputs.checkboxes, "change", listeners.checkboxChange, utils);
 
                 // text areas
-                var textAreas = document.getElementsByTagName("textarea");
-                ghost.prototype.addBrowserEvents(textAreas, "keyup", listeners.keyup, utils);
+                ghost.prototype.addBrowserEvents("textarea", "keyup", listeners.keyup, utils);
 
+                // select Boxes
+                ghost.prototype.addBrowserEvents("select", "change", listeners.selectChange, utils);
 
+                // forms
+                ghost.prototype.addBrowserEvents("form", "submit", listeners.formSubmit, utils);
             }
         },
         /**
@@ -281,12 +284,17 @@
             socket.emit(name, data);
         },
         /**
-         * @param {Array} elems - nodelist
+         * @param {Array|String} elems - nodelist
          * @param {String} event
          * @param {Function} callback
          * @param {Object} utils
          */
         addBrowserEvents: function (elems, event, callback, utils) {
+
+            if (typeof elems === "string") {
+                elems = document.getElementsByTagName(elems);
+            }
+
             for (var i = 0, n = elems.length; i < n; i += 1) {
                 elems[i][utils.eventListener](utils.prefix + event, callback, false);
             }
@@ -420,6 +428,14 @@
             checkboxChange: function (event) {
                 var target = event.target || event.srcElement;
                 ghost.prototype.emitEvent("input:checkbox", { id: target.id, checked: target.checked });
+            },
+            selectChange: function (event) {
+                var target = event.target || event.srcElement;
+                ghost.prototype.emitEvent("input:select", { id: target.id, value: target.value });
+            },
+            formSubmit: function (event) {
+                var target = event.target || event.srcElement;
+                ghost.prototype.emitEvent("form:submit", { id: target.id });
             }
         }
     };
@@ -477,6 +493,14 @@
         scope.ghostMode.enabled = false;
         var elem = ghost.prototype.checkCache(scope.ghostMode.cache, data.id);
         elem.checked = data.checked;
+    });
+
+    /**
+     * Submit a form.
+     */
+    socket.on("form:submit", function (data) {
+        scope.ghostMode.enabled = false;
+        document.forms[data.id].submit();
     });
 
 }(window, (typeof socket ==="undefined") ? {} : socket));
