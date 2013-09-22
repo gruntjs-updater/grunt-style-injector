@@ -63,11 +63,24 @@
             }
 
             if (ghostMode.forms) {
+
+                // text inputs
                 var inputs = ghost.prototype.getInputs();
                 ghost.prototype.addBrowserEvents(inputs.texts, "keyup", listeners.keyup, utils);
 
+                // radio buttons
+                ghost.prototype.addBrowserEvents(inputs.radios, "click", listeners.forceChange, utils);
+                ghost.prototype.addBrowserEvents(inputs.radios, "change", listeners.radioChange, utils);
+
+                // checkboxes buttons
+                ghost.prototype.addBrowserEvents(inputs.checkboxes, "click", listeners.forceChange, utils);
+                ghost.prototype.addBrowserEvents(inputs.checkboxes, "change", listeners.checkboxChange, utils);
+
+                // text areas
                 var textAreas = document.getElementsByTagName("textarea");
                 ghost.prototype.addBrowserEvents(textAreas, "keyup", listeners.keyup, utils);
+
+
             }
         },
         /**
@@ -202,15 +215,6 @@
             ghostMode.enabled = false;
             window.scrollTo(0, y);
         },
-        /**
-         * @param {string} url
-         * @param {number} y
-         */
-        syncScrollTop: function (url, y) {
-            if (url === window.location.href) {
-                this.setScrollTop(scope.ghostMode, y);
-            }
-        },
         checkCache: function (cache, id) {
             var elem;
             if (cache[id]) {
@@ -226,9 +230,6 @@
                     return elem;
                 } else return false;
             }
-        },
-        getForCache: function () {
-            return true;
         },
         /**
          * Add click events to all anchors on page
@@ -404,6 +405,21 @@
                     id: target.id,
                     value: target.value
                 });
+            },
+            forceChange: function (event) {
+                this.blur();
+                this.focus();
+            },
+            radioChange: function (event) {
+                var target = event.target || event.srcElement;
+                ghost.prototype.emitEvent("input:radio", {
+                    id: target.id,
+                    value: target.value
+                });
+            },
+            checkboxChange: function (event) {
+                var target = event.target || event.srcElement;
+                ghost.prototype.emitEvent("input:checkbox", { id: target.id, checked: target.checked });
             }
         }
     };
@@ -443,6 +459,24 @@
         scope.ghostMode.enabled = false;
         var elem = ghost.prototype.checkCache(scope.ghostMode.cache, data.id);
         elem.value = data.value;
+    });
+
+    /**
+     * Update an input field.
+     */
+    socket.on("input:update:radio", function (data) {
+        scope.ghostMode.enabled = false;
+        var elem = ghost.prototype.checkCache(scope.ghostMode.cache, data.id);
+        elem.checked = true;
+    });
+
+    /**
+     * Update checkboxes.
+     */
+    socket.on("input:update:checkbox", function (data) {
+        scope.ghostMode.enabled = false;
+        var elem = ghost.prototype.checkCache(scope.ghostMode.cache, data.id);
+        elem.checked = data.checked;
     });
 
 }(window, (typeof socket ==="undefined") ? {} : socket));

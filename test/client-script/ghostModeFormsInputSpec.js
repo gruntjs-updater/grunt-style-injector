@@ -20,13 +20,6 @@ describe("Ghostmode: forms", function () {
         input2.type = "text";
         input2.id = "input2";
 
-        radio = document.createElement("input");
-        radio.type = "radio";
-
-        checkbox = document.createElement("input");
-        checkbox.type = "checkbox";
-
-
     });
 
     it("can retrieve all Text form inputs", function () {
@@ -34,18 +27,6 @@ describe("Ghostmode: forms", function () {
         document.getElementsByTagName('body')[0].appendChild(input2);
         var inputs = ghost.getInputs();
         expect(inputs.texts.length).toBe(2);
-    });
-
-    it("can retrieve all Radio buttons", function () {
-        document.getElementsByTagName('body')[0].appendChild(radio);
-        var inputs = ghost.getInputs();
-        expect(inputs.radios.length).toBe(1);
-    });
-
-    it("can retrieve all checkboxes", function () {
-        document.getElementsByTagName('body')[0].appendChild(checkbox);
-        var inputs = ghost.getInputs();
-        expect(inputs.checkboxes.length).toBe(1);
     });
 
     describe("events on text inputs", function () {
@@ -104,7 +85,6 @@ describe("Ghostmode: forms", function () {
                 expect(elem.id).toBe("textarea01");
             });
             it("does not access DOM again if item is in the cache", function () {
-                spyOn(ghost, "getForCache");
 
                 document.getElementsByTagName('body')[0].appendChild(newInput2);
 
