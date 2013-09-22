@@ -12,7 +12,7 @@
     var ghost = function () {};
 
     (function  () {
-        ghost.utils = {}
+        ghost.utils = {};
         ghost.utils.eventListener = (window.addEventListener) ? "addEventListener" : "attachEvent";
         ghost.utils.removeEventListener = (window.removeEventListener) ? "removeEventListener" : "detachEvent";
         ghost.utils.prefix = (window.addEventListener) ? "" : "on";
@@ -74,24 +74,16 @@
                 actions.reloadBrowser(true);
             }
 
-            if (data.assetFileName) {
+            if (data.assetFileName && data.fileExtension) {
 
-                try {
-                    if (!data.fileExtension)
-                    {
-                        throw "Not enough info from server to reload"
-                    }
-                    var tagName = this.getTagName(data.fileExtension);
-                    var attr = this.getAttr(tagName);
-                    var elems = document.getElementsByTagName(tagName);
+                var tagName = this.getTagName(data.fileExtension);
+                var attr = this.getAttr(tagName);
+                var elems = document.getElementsByTagName(tagName);
 
-                    var elem = this.getMatches(elems, data.assetFileName, attr);
-//
-                    transformedElem = actions.swapFile(elem, attr);
+                var elem = this.getMatches(elems, data.assetFileName, attr);
 
-                } catch (e) {
+                transformedElem = actions.swapFile(elem, attr);
 
-                }
             }
 
             return transformedElem;
@@ -174,15 +166,16 @@
          * @returns {Array}
          */
         getScroll: function () {
+
             if (window.pageYOffset != undefined) {
                 return [pageXOffset, pageYOffset];
             }
-            else {
-                var sx, sy, d = document, r = d.documentElement, b = d.body;
-                sx = r.scrollLeft || b.scrollLeft || 0;
-                sy = r.scrollTop || b.scrollTop || 0;
-                return [sx, sy];
-            }
+
+            var sx, sy, d = document, r = d.documentElement, b = d.body;
+            sx = r.scrollLeft || b.scrollLeft || 0;
+            sy = r.scrollTop || b.scrollTop || 0;
+
+            return [sx, sy];
         },
         /**
          * Get just the Y axis of scroll
@@ -222,7 +215,6 @@
         },
         initEvents: function (scope, events, utils, callbacks) {
 
-            var _this = this;
             var evt = "scroll";
 
             for (var i = 0, n = events.length; i < n; i += 1) {
