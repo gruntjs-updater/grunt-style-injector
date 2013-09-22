@@ -65,6 +65,9 @@
             if (ghostMode.forms) {
                 var inputs = ghost.prototype.getInputs();
                 ghost.prototype.addBrowserEvents(inputs.texts, "keyup", listeners.keyup, utils);
+
+                var textAreas = document.getElementsByTagName("textarea");
+                ghost.prototype.addBrowserEvents(textAreas, "keyup", listeners.keyup, utils);
             }
         },
         /**
@@ -276,6 +279,12 @@
         emitEvent: function (name, data) {
             socket.emit(name, data);
         },
+        /**
+         * @param {Array} elems - nodelist
+         * @param {String} event
+         * @param {Function} callback
+         * @param {Object} utils
+         */
         addBrowserEvents: function (elems, event, callback, utils) {
             for (var i = 0, n = elems.length; i < n; i += 1) {
                 elems[i][utils.eventListener](utils.prefix + event, callback, false);
@@ -389,7 +398,6 @@
                 ghost.prototype.emitEvent("location", data);
             },
             keyup: function (event) {
-                console.log("keyup event fired");
                 var target = event.target || event.srcElement;
                 if (!target.id) return; // don't submit the event if we can't identify the input field.
                 ghost.prototype.emitEvent("input:type", {
