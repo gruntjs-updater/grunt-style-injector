@@ -35,21 +35,37 @@
     };
 
     styleInjector.prototype = {
+        /**
+         * @param {object} scope
+         * @param {object} options
+         * @param {object} utils
+         * @param {object} [listeners
+         */
         processOptions: function (scope, options, utils, listeners) {
             scope.options = options;
             if (options.ghostMode) {
                 this.initGhostMode(options.ghostMode, utils, listeners);
             }
         },
+        /**
+         * @param {object} ghostMode
+         * @param {object} utils
+         * @param {object} listeners
+         */
         initGhostMode: function (ghostMode, utils, listeners) {
             if (ghostMode.links) {
                 ghost.prototype.initClickEvents(scope, utils, listeners.click);
             }
-
             if (ghostMode.scroll) {
                 ghost.prototype.initEvents(scope, ['scroll'], utils, listeners);
             }
         },
+        /**
+         * @param {object} scope
+         * @param {object} data
+         * @param {object} actions
+         * @returns {HTMLElement}
+         */
         reloadEvent: function (scope, data, actions) {
 
             var transformedElem;
@@ -74,18 +90,32 @@
                     transformedElem = actions.swapFile(elem, attr);
 
                 } catch (e) {
-//                    console.log(e);
+
                 }
             }
 
             return transformedElem;
         },
+        /**
+         * @param {string} fileExtention
+         * @returns {string}
+         */
         getTagName: function (fileExtention) {
             return options.tagNames[fileExtention];
         },
+        /**
+         * @param {string} tagName
+         * @returns {string}
+         */
         getAttr: function (tagName) {
             return options.attrs[tagName];
         },
+        /**
+         * @param {array} elems - dom nodes
+         * @param {string} url
+         * @param {string} attr
+         * @returns {HTMLHtmlElement|null}
+         */
         getMatches: function (elems, url, attr) {
 
             var match;
@@ -99,12 +129,24 @@
         }
     };
 
+    /**
+     * The actions for the style injector
+     * @type {{reloadBrowser: Function, swapFile: Function}}
+     */
     styleInjectorActions.prototype = {
+        /**
+         * @param {boolean} confirm
+         */
         reloadBrowser: function (confirm) {
             if (confirm) {
                 location.reload();
             }
         },
+        /**
+         * @param {HTMLElement} elem
+         * @param {string} attr
+         * @returns {{elem: *, timeStamp: number}}
+         */
         swapFile: function (elem, attr) {
 
             var currentValue = elem[attr];
@@ -127,6 +169,10 @@
      * @type {{getScroll: Function}}
      */
     ghost.prototype = {
+        /**
+         * Get scroll position cross-browser
+         * @returns {Array}
+         */
         getScroll: function () {
             if (window.pageYOffset != undefined) {
                 return [pageXOffset, pageYOffset];
@@ -138,18 +184,36 @@
                 return [sx, sy];
             }
         },
+        /**
+         * Get just the Y axis of scroll
+         * @returns {Number}
+         */
         getScrollTop: function () {
             return this.getScroll()[1];
         },
+        /**
+         * @param {object} ghostMode
+         * @param {number} y
+         */
         setScrollTop: function (ghostMode, y) {
             ghostMode.enabled = false;
             window.scrollTo(0, y);
         },
+        /**
+         * @param {string} url
+         * @param {number} y
+         */
         syncScrollTop: function (url, y) {
             if (url === window.location.href) {
-                this.setScrollTop(y);
+                this.setScrollTop(scope.ghostMode, y);
             }
         },
+        /**
+         * Add click events to all anchors on page
+         * @param {object} scope
+         * @param {object} utils
+         * @param {Function} callback
+         */
         initClickEvents: function (scope, utils, callback) {
             var elems = document.getElementsByTagName("a");
             for (var i = 0, n = elems.length; i < n; i += 1) {
@@ -169,13 +233,20 @@
         },
         /**
          * Make a cross browser event handler system
-         * @param utils
-         * @param event
-         * @param callback
+         * @param {object} utils
+         * @param {string} event
+         * @param {Function} callback
          */
         composeSingleEvent: function (utils, event, callback) {
             window[utils.eventListener](utils.prefix + event, callback, false);
         },
+        /**
+         * Add an event to a dom element
+         * @param {HTMLElement} elem
+         * @param {object} utils
+         * @param {string} event
+         * @param {Function} callback
+         */
         composeElementEvent: function (elem, utils, event, callback) {
             elem[utils.eventListener](utils.prefix + "click", callback, false);
         },
@@ -192,6 +263,12 @@
                 elems[i][utils.eventListener](utils.prefix + event, callback, false);
             }
         },
+        /**
+         * Get a href value from a clicked element
+         * @param {HTMLElement} elem
+         * @param {HTMLElement} context
+         * @returns {string}
+         */
         getHref: function (elem, context) {
 
             var tagName = elem.tagName;
@@ -279,14 +356,10 @@
         socket.on = function () {};
     }
 
-    /**
-     * Process options on connection
-     */
     socket.on("connection", function (options) {
         styleInjector.prototype.processOptions(scope, options, ghost.utils, ghost.prototype.listeners);
     });
 
-    // Socket IO events
     socket.on('reload', function (data) {
         if (data) {
             styleInjector.prototype.reloadEvent(scope, data, styleInjectorActions.prototype);
@@ -298,16 +371,12 @@
             window.location = data.url;
         }
     });
-    /**
-     *
-    */
+
     socket.on("scroll:update", function (data) {
         if (data.url === window.location.href) {
             scope.ghostMode.enabled = false;
             window.scrollTo(0, data.position);
         }
     });
-
-    // If in test mode, expose to the window object to make testing possible.
 
 }(window, (typeof socket ==="undefined") ? {} : socket));
