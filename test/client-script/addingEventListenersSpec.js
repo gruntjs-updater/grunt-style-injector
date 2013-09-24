@@ -43,7 +43,7 @@ describe("Browser Events:", function () {
                 ]
             }
         };
-        ghost = window.ghost.prototype;
+        ghost = window.ghost;
         utils = window.ghost.utils;
         window.scrollTo(0, 0); //reset scroll position after each test.
         spyOn(ghost.listeners, "scroll");

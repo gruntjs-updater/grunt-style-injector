@@ -34,10 +34,8 @@ describe("Injecting Styles:", function () {
     var regex = /(style\.css\?rel=\d+)$/;
 
     beforeEach(function(){
-        si = window.styleInjector;
-        methods = si.prototype;
-        siActions = window.styleInjectorActions;
-        actions = siActions.prototype;
+        methods = window.styleInjector;
+        actions = window.styleInjectorActions;
         scope = {};
     });
 
@@ -72,9 +70,27 @@ describe("Injecting Styles:", function () {
         });
     });
 
-    describe("getting matching dom elements", function () {
-        var elem, elem2, elem3, elems, match;
+    describe("getting dom elements from a file extension", function () {
+        it("can retrieve dom elements", function () {
 
+            var domElem = document.createElement("link");
+            domElem.href = "style.css";
+            var domElem2 = document.createElement("link");
+            domElem2.href = "core.css";
+
+            document.getElementsByTagName('head')[0].appendChild(domElem);
+            document.getElementsByTagName('head')[0].appendChild(domElem2);
+
+
+            var domData = styleInjector.getElems("css");
+
+            expect(domData.elems.length).toBe(2);
+            expect(domData.attr).toBe("href");
+        });
+    });
+
+    describe("getting matching dom elements from an array", function () {
+        var elem, elem2, elem3, elems, match;
 
         beforeEach(function() {
 

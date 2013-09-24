@@ -1,23 +1,11 @@
 (function (window, socket) {
 
-
     var scope = {
         ghostMode: {
             enabled: true,
             cache: {}
         }
     };
-
-    var styleInjector = function () {};
-    var styleInjectorActions = function () {};
-    var ghost = function () {};
-
-    (function  () {
-        ghost.utils = {};
-        ghost.utils.eventListener = (window.addEventListener) ? "addEventListener" : "attachEvent";
-        ghost.utils.removeEventListener = (window.removeEventListener) ? "removeEventListener" : "detachEvent";
-        ghost.utils.prefix = (window.addEventListener) ? "" : "on";
-    })();
 
     var options = {
         tagNames: {
@@ -35,7 +23,7 @@
         }
     };
 
-    styleInjector.prototype = {
+    var styleInjector = {
         /**
          * @param {object} scope
          * @param {object} options
@@ -55,17 +43,17 @@
          */
         initGhostMode: function (ghostMode, utils, listeners) {
             if (ghostMode.links) {
-                ghost.prototype.initClickEvents(scope, utils, listeners.click);
+                ghost.initClickEvents(scope, utils, listeners.click);
             }
 
             if (ghostMode.scroll) {
-                ghost.prototype.initEvents(scope, ['scroll'], utils, listeners);
+                ghost.initEvents(scope, ['scroll'], utils, listeners);
             }
 
             if (ghostMode.forms) {
 
                 // text inputs
-                var inputs = ghost.prototype.getInputs();
+                var inputs = ghost.getInputs();
 
                 /**
                  * [0] = HTMLElements or tag-name as strings
@@ -85,7 +73,7 @@
                 ];
 
                 for (var i = 0, n = items.length; i < n; i += 1) {
-                    ghost.prototype.addBrowserEvents(items[i][0], items[i][1], listeners[items[i][2]], utils);
+                    ghost.addBrowserEvents(items[i][0], items[i][1], listeners[items[i][2]], utils);
                 }
             }
         },
@@ -105,24 +93,35 @@
 
             if (data.assetFileName && data.fileExtension) {
 
-                var tagName = this.getTagName(data.fileExtension);
-                var attr = this.getAttr(tagName);
-                var elems = document.getElementsByTagName(tagName);
+                var domData = this.getElems(data.fileExtension);
+                var elem = this.getMatches(domData.elems, data.assetFileName, domData.attr);
 
-                var elem = this.getMatches(elems, data.assetFileName, attr);
-
-                transformedElem = actions.swapFile(elem, attr);
-
+                transformedElem = actions.swapFile(elem, domData.attr);
             }
 
             return transformedElem;
         },
         /**
-         * @param {string} fileExtention
+         * Get dom elements based on a file extension
+         * @param {string} fileExtension
+         * @returns {{elems: (*|document.getElementsByTagName), attr: string}}
+         */
+        getElems: function (fileExtension) {
+
+            var tagName = this.getTagName(fileExtension);
+            var attr = this.getAttr(tagName);
+
+            return {
+                elems: document.getElementsByTagName(tagName),
+                attr: attr
+            }
+        },
+        /**
+         * @param {string} fileExtension
          * @returns {string}
          */
-        getTagName: function (fileExtention) {
-            return options.tagNames[fileExtention];
+        getTagName: function (fileExtension) {
+            return options.tagNames[fileExtension];
         },
         /**
          * @param {string} tagName
@@ -154,7 +153,7 @@
      * The actions for the style injector
      * @type {{reloadBrowser: Function, swapFile: Function}}
      */
-    styleInjectorActions.prototype = {
+    var styleInjectorActions = {
         /**
          * @param {boolean} confirm
          */
@@ -189,7 +188,7 @@
      * Ghost Mode
      * @type {{getScroll: Function}}
      */
-    ghost.prototype = {
+    var ghost = {
         /**
          * Get scroll position cross-browser
          * @returns {Array}
@@ -383,7 +382,7 @@
         },
         listeners: {
             scroll: function () {
-                var scrollTop = ghost.prototype.getScrollTop(); // Get y position of scroll
+                var scrollTop = ghost.getScrollTop(); // Get y position of scroll
                 var newScroll = new Date().getTime();
 
                 if (!scope.ghostMode.lastScroll) {
@@ -394,7 +393,7 @@
                 if (newScroll > scope.ghostMode.lastScroll + 50) { // throttle scroll events
                     if (scope.ghostMode.enabled) {
                         scope.ghostMode.lastScroll = newScroll;
-                        ghost.prototype.emitEvent("scroll",
+                        ghost.emitEvent("scroll",
                                 {
                                     pos: scrollTop, url: window.location.href
                                 });
@@ -405,41 +404,46 @@
             },
             click: function (event) {
                 var data = {
-                    url: ghost.prototype.getHref(event.target || event.srcElement, this)
+                    url: ghost.getHref(event.target || event.srcElement, this)
                 };
-                ghost.prototype.emitEvent("location", data);
+                ghost.emitEvent("location", data);
             },
             keyup: function (event) {
                 var target = event.target || event.srcElement;
                 if (!target.id) return; // don't submit the event if we can't identify the input field.
-                ghost.prototype.emitEvent("input:type", {
+                ghost.emitEvent("input:type", {
                     id: target.id,
                     value: target.value
                 });
             },
-            forceChange: function (event) {
+            forceChange: function () {
                 this.blur();
                 this.focus();
             },
             radioChange: function (event) {
                 var target = event.target || event.srcElement;
-                ghost.prototype.emitEvent("input:radio", {
+                ghost.emitEvent("input:radio", {
                     id: target.id,
                     value: target.value
                 });
             },
             checkboxChange: function (event) {
                 var target = event.target || event.srcElement;
-                ghost.prototype.emitEvent("input:checkbox", { id: target.id, checked: target.checked });
+                ghost.emitEvent("input:checkbox", { id: target.id, checked: target.checked });
             },
             selectChange: function (event) {
                 var target = event.target || event.srcElement;
-                ghost.prototype.emitEvent("input:select", { id: target.id, value: target.value });
+                ghost.emitEvent("input:select", { id: target.id, value: target.value });
             },
             formSubmit: function (event) {
                 var target = event.target || event.srcElement;
-                ghost.prototype.emitEvent("form:submit", { id: target.id });
+                ghost.emitEvent("form:submit", { id: target.id });
             }
+        },
+        utils: {
+            eventListener: (window.addEventListener) ? "addEventListener" : "attachEvent",
+            removeEventListener: (window.removeEventListener) ? "removeEventListener" : "detachEvent",
+            prefix: (window.addEventListener) ? "" : "on"
         }
     };
 
@@ -452,12 +456,12 @@
     }
 
     socket.on("connection", function (options) {
-        styleInjector.prototype.processOptions(scope, options, ghost.utils, ghost.prototype.listeners);
+        styleInjector.processOptions(scope, options, ghost.utils, ghost.listeners);
     });
 
     socket.on('reload', function (data) {
         if (data) {
-            styleInjector.prototype.reloadEvent(scope, data, styleInjectorActions.prototype);
+            styleInjector.reloadEvent(scope, data, styleInjectorActions);
         }
     });
 
@@ -476,34 +480,25 @@
 
     socket.on("input:update", function (data) {
         scope.ghostMode.enabled = false;
-        var elem = ghost.prototype.checkCache(scope.ghostMode.cache, data.id);
+        var elem = ghost.checkCache(scope.ghostMode.cache, data.id);
         elem.value = data.value;
     });
 
-    /**
-     * Update an input field.
-     */
     socket.on("input:update:radio", function (data) {
         scope.ghostMode.enabled = false;
-        var elem = ghost.prototype.checkCache(scope.ghostMode.cache, data.id);
+        var elem = ghost.checkCache(scope.ghostMode.cache, data.id);
         elem.checked = true;
     });
 
-    /**
-     * Update checkboxes.
-     */
     socket.on("input:update:checkbox", function (data) {
         scope.ghostMode.enabled = false;
-        var elem = ghost.prototype.checkCache(scope.ghostMode.cache, data.id);
+        var elem = ghost.checkCache(scope.ghostMode.cache, data.id);
         elem.checked = data.checked;
     });
 
-    /**
-     * Submit a form.
-     */
     socket.on("form:submit", function (data) {
         scope.ghostMode.enabled = false;
         document.forms[data.id].submit();
     });
 
-}(window, (typeof socket ==="undefined") ? {} : socket));
+}(window, (typeof socket === "undefined") ? {} : socket));

@@ -9,7 +9,7 @@ describe("Ghostmode Forms: Selects", function () {
                 cache: {}
             }
         };
-        ghost = window.ghost.prototype;
+        ghost = window.ghost;
         utils = window.ghost.utils;
 
         selectElem = document.createElement("select");

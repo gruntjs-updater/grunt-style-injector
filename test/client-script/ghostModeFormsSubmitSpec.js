@@ -9,7 +9,7 @@ describe("Ghostmode Forms: Submitting", function () {
                 cache: {}
             }
         };
-        ghost = window.ghost.prototype;
+        ghost = window.ghost;
         utils = window.ghost.utils;
 
         formElem = document.createElement("form");

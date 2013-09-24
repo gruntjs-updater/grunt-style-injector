@@ -10,7 +10,7 @@ describe("Style Injector INIT", function () {
 
     beforeEach(function(){
         si = window.styleInjector;
-        methods = si.prototype;
+        methods = si;
         scope = {};
     });
 

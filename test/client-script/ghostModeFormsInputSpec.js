@@ -9,7 +9,7 @@ describe("Ghostmode: forms", function () {
                 cache: {}
             }
         };
-        ghost = window.ghost.prototype;
+        ghost = window.ghost;
         utils = window.ghost.utils;
 
         input1 = document.createElement("input");

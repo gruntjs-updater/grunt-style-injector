@@ -9,7 +9,7 @@ describe("Ghostmode Forms: Checkboxes", function () {
                 cache: {}
             }
         };
-        ghost = window.ghost.prototype;
+        ghost = window.ghost;
         utils = window.ghost.utils;
 
         checkbox1 = document.createElement("input");
