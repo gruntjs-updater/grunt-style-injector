@@ -33,7 +33,13 @@ module.exports = function (grunt) {
             tests: ['tmp']
         },
         watch: {
-            files: "test/*"
+            server_tests: {
+                files: [
+                    "test/server/**/*.js",
+                    "tasks/lib/**/*.js"
+                ],
+                tasks: ["jasmine_node"]
+            }
         },
         styleinjector: {
             default_options: {
@@ -65,6 +71,18 @@ module.exports = function (grunt) {
         // Unit tests.
         nodeunit: {
             tests: ['test/*_test.js']
+        },
+        jasmine_node: {
+            specNameMatcher: "Spec", // load only specs containing specNameMatcher
+            projectRoot: "test/server",
+            requirejs: false,
+            forceExit: true,
+            jUnit: {
+                report: false,
+                savePath : "./build/reports/jasmine/",
+                useDotNotation: true,
+                consolidate: true
+            }
         }
     });
 
@@ -77,10 +95,11 @@ module.exports = function (grunt) {
     grunt.loadNpmTasks('grunt-sass');
     grunt.loadNpmTasks('grunt-contrib-uglify');
     grunt.loadNpmTasks('grunt-karma');
+    grunt.loadNpmTasks('grunt-jasmine-node');
 
     // Whenever the "test" task is run, first clean the "tmp" dir, then run this
     // plugin's task(s), then test the result.
-    grunt.registerTask('test', ['karma']);
+    grunt.registerTask('test', ['karma', 'jasmine_node']);
 
     // By default, lint and run all tests.
     grunt.registerTask('default', ["styleinjector", "watch"]);

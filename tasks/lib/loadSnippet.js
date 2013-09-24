@@ -14,6 +14,7 @@ module.exports.setVars = function (hostIp, socketIoPort, scriptPort) {
 };
 
 module.exports.middleWare = function (req, res, next) {
+
     var write = res.write;
 
     var filepath = url.parse(req.url).pathname;

@@ -41,17 +41,24 @@ var watchFiles = function (files, io) {
     watcher.on('change', setupChangeFile);
 };
 
+var getExtension = function  (path) {
+    return filePath.extname(path).replace(".", "");
+};
+
 /**
  * Emit the event to the client to reload/inject
  * @param {string} path
  * @param ioInstance
  */
+
+module.exports.getExtension = getExtension;
+
 var changeFile = function (path, ioInstance) {
 
     log(messages.fileChanged(path), false);
 
     // get the file extention
-    var fileExtension = /\.[a-zA-Z]{2,4}$/.exec(path)[0];
+    var fileExtension = getExtension(path);
     var data = {};
 
     // reload the entire page if the changed file's extension is in the options array
@@ -228,7 +235,7 @@ module.exports.watch = function (files, gruntOptions, done, grunt) {
          * Find an empty port for SOCKET.IO
          * @param callback
          */
-                function (callback) {
+        function (callback) {
             portScanner.findAPortNotInUse(3000, 3020, 'localhost', function (error, port) {
                 callback(null, port);
             });
@@ -305,7 +312,6 @@ var getHostIp = function (options) {
 
     return externalIp;
 };
-
 
 // export methods for tests
 module.exports.getHostIp = getHostIp;
