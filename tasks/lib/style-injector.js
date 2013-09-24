@@ -63,8 +63,8 @@ var changeFile = function (path, ioInstance) {
 
     if (_.contains(options.injectFileTypes, fileExtension)) {
         // try to inject the files.
-        data.assetUrl = filePath.basename(path);
-        data.fileExtention = fileExtension;
+        data.assetFileName = filePath.basename(path);
+        data.fileExtension = fileExtension.replace(".","");
         ioInstance.sockets.emit("reload", data);
         log(messages.browser.inject(), false);
     }

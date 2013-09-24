@@ -1,10 +1,9 @@
 body {
-    background: white;
-    color: black;
+    background: orangered;
+    color: white;
 }
 
 .container {
     margin: 0 auto;
     width: 320px;
 }
-
