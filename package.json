@@ -24,7 +24,7 @@
         "node": ">= 0.8.0"
     },
     "scripts": {
-        "test": "./node_modules/.bin/karma start --single-run --browsers PhantomJS"
+        "test": "./node_modules/.bin/karma start --browsers Firefox --single-run"
     },
     "devDependencies": {
         "grunt-contrib-jshint": "~0.6.0",
