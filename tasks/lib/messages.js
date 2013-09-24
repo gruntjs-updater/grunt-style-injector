@@ -45,6 +45,6 @@ module.exports = {
         location: function (url) {
             return clc.yellow("Link clicked! Redirecting all browser to " + clc.green(url));
         },
-        clientScript: "/style-injector-client.min.js",
+        clientScript: "/style-injector-client2.js",
         socketIoScript: "/socket.io/socket.io.js"
 };
