@@ -1,4 +1,4 @@
-# grunt-style-injector
+# grunt-style-injector [![Build Status](https://travis-ci.org/shakyShane/grunt-style-injector.png?branch=master)](https://travis-ci.org/shakyShane/grunt-style-injector)
 
 > A live-reload alternative with support for legacy IE browsers.
 
@@ -14,16 +14,14 @@ This plugin gives you live style-injecting into all browsers. It also provides l
 
 It can also be used in **Ghost-Mode** where all connected broswers/devices will try to keep in sync. Ghost-Mode currently supports three options:
 
-**links** - When you click a link in one browser (say, Chrome on desktop), all of the other browsers you have open will navigate to the same link.
+**links**  - When you click a link in one browser (say, Chrome on desktop), all of the other browsers you have open will navigate to the same link.
 
 **scroll** - When you scroll a website in one browser, all the others will follow suit. (very useful when developing with multiple monitors/devices )
 
-**forms** - When you fill out a form, all connected browsers will populate their forms with what you type in real-time. (currently working for
-text-inputs, textareas, selects, radios & checkboxes)
-
+**forms**  - When you fill out a form, all connected browsers will populate their forms with what you type in real-time. (currently working for
+text-inputs, text areas, selects, radios & checkboxes)
 
 ##Install
-
 
 ```shell
 npm install grunt-style-injector --save-dev
