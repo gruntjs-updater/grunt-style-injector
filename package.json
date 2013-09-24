@@ -43,7 +43,7 @@
         "grunt-karma": "~0.6.2",
         "grunt-cli": "*",
         "grunt": "~0.4.1",
-        "phantomjs": "1.9"
+        "phantomjs": "~1.9"
     },
     "peerDependencies": {
         "grunt": "~0.4.1",
