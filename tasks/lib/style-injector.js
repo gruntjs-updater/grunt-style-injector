@@ -15,69 +15,7 @@ var options;
 
 var scriptData = fs.readFileSync(__dirname + messages.clientScript, "UTF-8");
 
-/**
- * Check if user doesn't want a verbose console.
- * @param {string} msg
- * @param {boolean} override
- */
-var log = function (msg, override) {
-    if (options.debugInfo || override) {
-        console.log(msg);
-    }
-};
 
-/**
- * Watch the files
- * @param files
- * @param io
- */
-var watchFiles = function (files, io) {
-    var watcher = chokidar.watch(files, {ignored: /^\./, persistent: true});
-
-    var setupChangeFile = function (filepath) {
-        changeFile(filepath, io);
-    };
-
-    watcher.on('change', setupChangeFile);
-};
-
-var getExtension = function  (path) {
-    return filePath.extname(path).replace(".", "");
-};
-
-/**
- * Emit the event to the client to reload/inject
- * @param {string} path
- * @param ioInstance
- */
-
-module.exports.getExtension = getExtension;
-
-var changeFile = function (path, ioInstance) {
-
-    log(messages.fileChanged(path), false);
-
-    // get the file extention
-    var fileExtension = getExtension(path);
-    var data = {};
-
-    // reload the entire page if the changed file's extension is in the options array
-    if (_.contains(options.reloadFileTypes, fileExtension)) {
-        data.url = path;
-        ioInstance.sockets.emit("reload", data);
-        log(messages.browser.reload(), false);
-    }
-
-    if (_.contains(options.injectFileTypes, fileExtension)) {
-        // try to inject the files.
-        data.assetFileName = filePath.basename(path);
-        data.fileExtension = fileExtension.replace(".","");
-        ioInstance.sockets.emit("reload", data);
-        log(messages.browser.inject(), false);
-    }
-
-    return data;
-};
 
 /**
  * Serve the client-side javascript.
@@ -88,7 +26,7 @@ var changeFile = function (path, ioInstance) {
  */
 var serveCustomScript = function (hostIp, socketIoPort, scriptPort, options, grunt) {
 
-    var app, baseUrl;
+    var app, baseDir;
 
     loadSnippet.setVars(hostIp, socketIoPort, scriptPort);
 
@@ -126,22 +64,6 @@ var serveCustomScript = function (hostIp, socketIoPort, scriptPort, options, gru
         log(messages.init(hostIp, socketIoPort, scriptPort), true);
     }
 };
-
-function getBaseDir(baseDir) {
-
-    if (baseDir === "./") {
-        return process.cwd();
-    }
-
-    if (baseDir[0] === "/") {
-        return process.cwd() + baseDir;
-    } else {
-        if (baseDir[0] === "." && baseDir[1] === "/"){
-            return process.cwd() + baseDir.replace(".", "");
-        }
-        return process.cwd() + "/" + baseDir;
-    }
-}
 
 /**
  * @param data
@@ -289,30 +211,159 @@ module.exports.watch = function (files, gruntOptions, done, grunt) {
 };
 
 /**
- * Get the external HostIp
- * @returns {*}
+ * Main methods exposed for testing
+ * @type {{}}
  */
-var getHostIp = function (options) {
+var styleInjector = {};
 
-    if (options.host) {
-        return options.host;
-    }
-
-    var os = require('os');
-    var networkInterfaces = os.networkInterfaces();
-    var externalIp = null;
-
-    _.each(networkInterfaces, function (_interface) {
-        return _.each(_interface, function (address) {
-            if (address.internal === false && address.family === "IPv4") {
-                externalIp = address.address;
-            }
-        });
-    });
-
-    return externalIp;
+styleInjector.options = {
+    injectFileTypes: ['css', 'png', 'jpg', 'svg', 'gif']
 };
 
-// export methods for tests
-module.exports.getHostIp = getHostIp;
-module.exports.changeFile = changeFile;
+styleInjector.methods = {
+    /**
+     * Helper to try to retrieve the correct external IP for host
+     * @param {object} options
+     * @returns {string} - the IP address
+     */
+    getHostIp: function (options) {
+
+        if (options && options.hostIp) {
+            return options.hostIp;
+        }
+
+        var os = require('os');
+        var networkInterfaces = os.networkInterfaces();
+        var externalIp = null;
+
+        // loop through results and check that it's an IPv4 address & it's not internal
+        _.each(networkInterfaces, function (_interface) {
+            return _.each(_interface, function (address) {
+                if (address.internal === false && address.family === "IPv4") {
+                    externalIp = address.address;
+                }
+            });
+        });
+
+        return externalIp;
+    },
+    /**
+     * take the path provided in options & transform into CWD for serving files
+     * @param {string} baseDir
+     * @returns {string}
+     */
+    getBaseDir: function (baseDir) {
+
+        var suffix = "";
+
+        if (!baseDir || baseDir === "./" || baseDir === "/" || baseDir === ".") {
+            return process.cwd();
+        } else {
+            if (baseDir[0] === "/") {
+                suffix = baseDir;
+            } else {
+                if (baseDir[0] === "." && baseDir[1] === "/"){
+                    suffix = baseDir.replace(".", "");
+                } else {
+                    suffix = "/" + baseDir;
+                }
+            }
+        }
+
+        return process.cwd() + suffix;
+    },
+    /**
+     * Log a message to the console
+     * @param {string} msg
+     * @param {object} options
+     * @param {boolean} override
+     * @returns {boolean}
+     */
+    log: function (msg, options, override) {
+
+        if (!options.debugInfo && !override) {
+            return false;
+        }
+
+        return console.log(msg);
+    },
+    /**
+     * @param {string} path
+     * @param {socket} io
+     * @param {object} options
+     * @returns {{assetFileName: string}}
+     */
+    changeFile: function (path, io, options) {
+
+        var fileName = filePath.basename(path),
+            fileExtension = this.getFileExtension(fileName);
+
+        var data = {
+            assetFileName: fileName,
+            fileExtension: fileExtension
+        };
+
+        var message = "inject";
+
+        if(!_.contains(options.injectFileTypes, fileExtension)) {
+            data.url = path;
+            message = "reload";
+        }
+
+        // emit the event through socket
+        io.sockets.emit("reload", data);
+
+        // log the message to the console
+        this.log(messages.browser[message](), options, false);
+
+        return data;
+    },
+    /**
+     * Proxy for chokidar watching files
+     * @param {array|string} files
+     * @param {object} io
+     * @param {function} callback
+     */
+    watchFiles: function (files, io, callback) {
+
+        var watcher = chokidar.watch(files, {ignored: /^\./, persistent: true});
+
+        watcher.on('change', function (filepath) {
+            callback(filepath, io);
+        });
+    },
+    getFileExtension: function (path) {
+        return filePath.extname(path).replace(".", "");
+    },
+    /**
+     * Get two available Ports
+     * @param {number} limit
+     * @param {function} callback
+     */
+    getPorts: function (limit, callback) {
+
+        var ports = [];
+
+        var getPort = function (start) {
+            portScanner.findAPortNotInUse(start+1, 4000, 'localhost', function (error, port) {
+                ports.push(port);
+                runAgain();
+            });
+        };
+
+        var runAgain = function () {
+            if (ports.length < limit) {
+                getPort(ports[0]);
+            } else {
+                return callback(ports);
+            }
+            return false;
+        };
+
+        // Get the first port
+        getPort(2999);
+
+    }
+};
+
+module.exports = styleInjector;
