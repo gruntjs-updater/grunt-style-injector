@@ -15,111 +15,61 @@ var options;
 
 var scriptData = fs.readFileSync(__dirname + messages.clientScript, "UTF-8");
 
-
-
-/**
- * Serve the client-side javascript.
- * @param {string} hostIp
- * @param {number} socketIoPort
- * @param {number} scriptPort
- * @param {object} options (grunt options)
- */
-var serveCustomScript = function (hostIp, socketIoPort, scriptPort, options, grunt) {
-
-    var app, baseDir;
-
-    loadSnippet.setVars(hostIp, socketIoPort, scriptPort);
-
-    // Intercept request for custom script, inject the info about socketIO
-    var modifySnippet = function (req, res) {
-        res.setHeader("Content-Type", "text/javascript");
-        res.end( "var socket = io.connect('" + hostIp + ":" + socketIoPort +"');" + scriptData);
-    };
-
-    if (!options.server) {
-        app = connect().use(messages.clientScript, modifySnippet);
-    } else {
-
-        if (options.server.baseDir[0] === "/") {
-            grunt.fail.fatal(messages.invalidBaseDir());
-        }
-
-        baseDir = options.server.baseDir || "./"; // Serve root directory if no baseDir is specified
-
-        app = connect()
-                .use(messages.clientScript, modifySnippet)
-                .use(loadSnippet.middleWare)
-                .use(connect.static(filePath.resolve(baseDir)));
-
-        var open = require("open");
-        open("http://"+hostIp+":"+scriptPort);
-    }
-
-    http.createServer(app).listen(scriptPort);
-
-    // Show Message with either Snippet info, or with server info
-    if (options.server) {
-        log(messages.initServer(hostIp, scriptPort, getBaseDir(baseDir), options), true);
-    } else {
-        log(messages.init(hostIp, socketIoPort, scriptPort), true);
-    }
-};
-
 /**
  * @param data
  */
-var updateLocations = function (data) {
-    log(messages.location(data.url), false);
-    this.broadcast.emit("location:update", { url: data.url });
-};
-
-/**
- * Update scroll position of browsers.
- * @param data
- */
-var updateScrollPosition = function (data) {
-    this.broadcast.emit("scroll:update", { position: data.pos, ghostId: data.ghostId, url: data.url});
-};
-
-/**
- * Update a text input;
- * @param data
- */
-var updateFormField = function (data) {
-    this.broadcast.emit("input:update", { id: data.id, value: data.value });
-};
-
-/**
- * Update a select element
- * @param data
- */
-var updateSelectField = function (data) {
-    this.broadcast.emit("input:update", { id: data.id, value: data.value });
-};
-
-/**
- * Update Radio Field
- * @param data
- */
-var updateRadioField = function (data) {
-    this.broadcast.emit("input:update:radio", { id: data.id, value: data.value });
-};
-
-/**
- * Update Checkbox
- * @param data
- */
-var updateCheckboxField = function (data) {
-    this.broadcast.emit("input:update:checkbox", { id: data.id, checked: data.checked });
-};
-
-/**
- * Submit a form
- * @param data
- */
-var submitForm = function (data) {
-    this.broadcast.emit("form:submit", { id: data.id });
-};
+//var updateLocations = function (data) {
+//    log(messages.location(data.url), false);
+//    this.broadcast.emit("location:update", { url: data.url });
+//};
+//
+///**
+// * Update scroll position of browsers.
+// * @param data
+// */
+//var updateScrollPosition = function (data) {
+//    this.broadcast.emit("scroll:update", { position: data.pos, ghostId: data.ghostId, url: data.url});
+//};
+//
+///**
+// * Update a text input;
+// * @param data
+// */
+//var updateFormField = function (data) {
+//    this.broadcast.emit("input:update", { id: data.id, value: data.value });
+//};
+//
+///**
+// * Update a select element
+// * @param data
+// */
+//var updateSelectField = function (data) {
+//    this.broadcast.emit("input:update", { id: data.id, value: data.value });
+//};
+//
+///**
+// * Update Radio Field
+// * @param data
+// */
+//var updateRadioField = function (data) {
+//    this.broadcast.emit("input:update:radio", { id: data.id, value: data.value });
+//};
+//
+///**
+// * Update Checkbox
+// * @param data
+// */
+//var updateCheckboxField = function (data) {
+//    this.broadcast.emit("input:update:checkbox", { id: data.id, checked: data.checked });
+//};
+//
+///**
+// * Submit a form
+// * @param data
+// */
+//var submitForm = function (data) {
+//    this.broadcast.emit("form:submit", { id: data.id });
+//};
 
 /**
  * If ghostMode was enabled, inform all browsers when any of them changes URL.
@@ -127,100 +77,158 @@ var submitForm = function (data) {
  * @param client
  * @param options
  */
-var setLocationTracking = function (io, client, options) {
-
-    // remember the context of the client that emitted the event.
-    if (options.ghostMode) {
-        client.on("location", updateLocations);
-        client.on("scroll", updateScrollPosition);
-        client.on("input:type", updateFormField);
-        client.on("input:select", updateSelectField);
-        client.on("input:radio", updateRadioField);
-        client.on("input:checkbox", updateCheckboxField);
-        client.on("form:submit", submitForm);
-    }
-};
-
-/**
- * Method exposed to Grunt Task
- * @param {Array} files - relative file paths
- * @param {object} gruntOptions - merged default options & user options
- * @param {function} done - Kill the grunt task on errors
- */
-module.exports.watch = function (files, gruntOptions, done, grunt) {
-
-    var io;
-    options = gruntOptions;
-
-    async.waterfall([
-        /**
-         * Find an empty port for SOCKET.IO
-         * @param callback
-         */
-        function (callback) {
-            portScanner.findAPortNotInUse(3000, 3020, 'localhost', function (error, port) {
-                callback(null, port);
-            });
-        },
-        function (socketIoPort, callback) {
-
-            var ua;
-
-            io = require('socket.io').listen(socketIoPort);
-            io.set('log level', 0);
-
-            // print to console when browsers connect
-            io.sockets.on("connection", function (client) {
-
-                // When a client connects, give them the options.
-                options.id = client.id;
-
-                client.emit("connection", options);
-
-                ua = client.handshake.headers['user-agent'];
-
-                log(messages.connection(parser.setUA(ua).getBrowser()), false);
-
-                // Set up ghost mode
-                setLocationTracking(io, client, options);
-
-            });
-
-            // Find a free port for our custom client script
-            portScanner.findAPortNotInUse(3000, 3020, 'localhost', function (error, scriptPort) {
-                callback(null, io, getHostIp(options), socketIoPort, scriptPort);
-            });
-
-        },
-        function (io, hostIp, socketIoPort, scriptPort, callback) {
-
-            // Serve Custom Client-side JS
-            serveCustomScript(hostIp, socketIoPort, scriptPort, options, grunt);
-
-            // Watch the files
-            watchFiles(files, io);
-
-            callback(null, 'two');
-        }
-    ],
-            function (err, results) {
-                if (err) {
-                    done();
-                }
-            });
-};
+//var setLocationTracking = function (io, client, options) {
+//
+//    // remember the context of the client that emitted the event.
+//    if (options.ghostMode) {
+//        client.on("location", updateLocations);
+//        client.on("scroll", updateScrollPosition);
+//        client.on("input:type", updateFormField);
+//        client.on("input:select", updateSelectField);
+//        client.on("input:radio", updateRadioField);
+//        client.on("input:checkbox", updateCheckboxField);
+//        client.on("form:submit", submitForm);
+//    }
+//};
 
 /**
  * Main methods exposed for testing
  * @type {{}}
  */
-var styleInjector = {};
+var styleInjector = function(){};
 
-styleInjector.options = {
-    injectFileTypes: ['css', 'png', 'jpg', 'svg', 'gif']
-};
+//styleInjector.options = {
+//
+//};
+//
+//var io;
+//var files;
 
-styleInjector.methods = {
+
+styleInjector.prototype = {
+    options: {
+        injectFileTypes: ['css', 'png', 'jpg', 'svg', 'gif']
+    },
+    init: function (files, options) {
+        var _this = this;
+
+        this.getPorts(2, function (ports) {
+//            _this.setupSocket();
+        }, options);
+    },
+    /**
+     * Get two available Ports
+     * @param {number} limit
+     * @param {function} callback
+     * @param options
+     */
+    getPorts: function (limit, callback, options) {
+
+        var ports = [];
+
+        // get a port (async)
+        var getPort = function (start) {
+            portScanner.findAPortNotInUse(start + 1, 4000, 'localhost', function (error, port) {
+                ports.push(port);
+                runAgain();
+            });
+        };
+
+        // run again if number of ports not reached
+        var runAgain = function () {
+            if (ports.length < limit) {
+                getPort(ports[0]);
+            } else {
+                return callback(ports);
+            }
+            return false;
+        };
+
+        // Get the first port
+        getPort(2999);
+
+    },
+    /**
+     * Set up the socket.io server
+     * @param ports
+     * @param userOptions
+     * @returns {*}
+     */
+    setupSocket: function (ports, userOptions) {
+
+        var ua;
+        var _this = this;
+
+        io = require('socket.io').listen(ports[0]);
+        io.set('log level', 0);
+
+        return io;
+    },
+    /**
+     * Things to do when a client connects
+     * @param {array} events
+     * @param {object} userOptions
+     * @param {function} handle
+     */
+    handleSocketConnection: function (events, userOptions, handle) {
+
+        var _this = this;
+        var ua;
+
+        io.sockets.on("connection", function (client) {
+
+            // set ghostmode callbacks
+            if (userOptions.ghostMode) {
+                for (var i = 0, n = events.length; i < n; i += 1) {
+                    handle(client, events[i], userOptions);
+                }
+            }
+
+            ua = client.handshake.headers['user-agent'];
+            _this.logConnection(ua, userOptions);
+        });
+    },
+    /**
+     * Add a client event & it's callback
+     * @param {object} client
+     * @param {string} event
+     * @param {object} userOptions
+     */
+    handleClientSocketEvent: function (client, event, userOptions) {
+        client.on(event.name, function (client) {
+            event.callback(io, client, userOptions);
+        });
+    },
+    /**
+     * Kill the current socket IO server
+     */
+    killSocket: function () {
+        return io.server.close();
+    },
+    /**
+     * Log a successful client connection
+     * @param {object} ua
+     * @param {object} userOptions
+     */
+    logConnection: function (ua, userOptions) {
+        this.log(messages.connection(parser.setUA(ua).getBrowser()), userOptions, true);
+    },
+    callbacks: {
+//        connection: function (io, client, userOptions, context) {
+//
+//            // When a client connects, give them the options.
+//            options.id = client.id;
+//
+//            client.emit("connection", options);
+//
+//            var ua = client.handshake.headers['user-agent'];
+//
+//            log(messages.connection(parser.setUA(ua).getBrowser()), false);
+//
+//            // Set up ghost mode
+//            context.setupGhostMode(client, options);
+//        }
+    },
     /**
      * Helper to try to retrieve the correct external IP for host
      * @param {object} options
@@ -248,7 +256,7 @@ styleInjector.methods = {
         return externalIp;
     },
     /**
-     * take the path provided in options & transform into CWD for serving files
+     * Take the path provided in options & transform into CWD for serving files
      * @param {string} baseDir
      * @returns {string}
      */
@@ -262,7 +270,7 @@ styleInjector.methods = {
             if (baseDir[0] === "/") {
                 suffix = baseDir;
             } else {
-                if (baseDir[0] === "." && baseDir[1] === "/"){
+                if (baseDir[0] === "." && baseDir[1] === "/") {
                     suffix = baseDir.replace(".", "");
                 } else {
                     suffix = "/" + baseDir;
@@ -271,6 +279,13 @@ styleInjector.methods = {
         }
 
         return process.cwd() + suffix;
+    },
+    /**
+     * Expose messages for tests
+     * @returns {*|exports}
+     */
+    getMessages: function () {
+        return messages;
     },
     /**
      * Log a message to the console
@@ -296,7 +311,7 @@ styleInjector.methods = {
     changeFile: function (path, io, options) {
 
         var fileName = filePath.basename(path),
-            fileExtension = this.getFileExtension(fileName);
+                fileExtension = this.getFileExtension(fileName);
 
         var data = {
             assetFileName: fileName,
@@ -305,7 +320,7 @@ styleInjector.methods = {
 
         var message = "inject";
 
-        if(!_.contains(options.injectFileTypes, fileExtension)) {
+        if (!_.contains(options.injectFileTypes, fileExtension)) {
             data.url = path;
             message = "reload";
         }
@@ -317,6 +332,59 @@ styleInjector.methods = {
         this.log(messages.browser[message](), options, false);
 
         return data;
+    },
+    /**
+     * Launch the server for serving the client JS plus static files
+     * @param {string} host
+     * @param {array} ports
+     * @param {object} options
+     * @returns {*|http.Server}
+     */
+    launchServer: function (host, ports, options) {
+
+        var modifySnippet = function (req, res) {
+            res.setHeader("Content-Type", "text/javascript");
+            res.end(messages.socketConnector(host, ports[0]) + scriptData);
+        };
+
+        var app;
+        if (!options.server) {
+            app = connect().use(messages.clientScript, modifySnippet);
+        } else {
+
+            // serve static files
+            loadSnippet.setVars(host, ports[0], ports[1]);
+            var baseDir = options.server.baseDir || "./";
+
+            app = connect()
+                    .use(messages.clientScript, modifySnippet)
+                    .use(loadSnippet.middleWare)
+                    .use(connect.static(filePath.resolve(baseDir)));
+        }
+
+        var server = http.createServer(app).listen(ports[1]);
+        var msg;
+
+        if (options.server) {
+            msg = messages.initServer(host, ports[1], this.getBaseDir(options.server.baseDir || "./"), options);
+            this.openBrowser(host, ports[1]);
+        } else {
+            msg = messages.init(host, ports[0], ports[1]);
+        }
+
+        this.log(msg, options, true);
+
+        return server;
+    },
+    /**
+     * Open the page in browser
+     * _todo uncomment after testing done
+     * @param host
+     * @param port
+     */
+    openBrowser: function (host, port) {
+//        var open = require("open");
+//        open("http://"+host+":"+port);
     },
     /**
      * Proxy for chokidar watching files
@@ -332,37 +400,9 @@ styleInjector.methods = {
             callback(filepath, io);
         });
     },
+
     getFileExtension: function (path) {
         return filePath.extname(path).replace(".", "");
-    },
-    /**
-     * Get two available Ports
-     * @param {number} limit
-     * @param {function} callback
-     */
-    getPorts: function (limit, callback) {
-
-        var ports = [];
-
-        var getPort = function (start) {
-            portScanner.findAPortNotInUse(start+1, 4000, 'localhost', function (error, port) {
-                ports.push(port);
-                runAgain();
-            });
-        };
-
-        var runAgain = function () {
-            if (ports.length < limit) {
-                getPort(ports[0]);
-            } else {
-                return callback(ports);
-            }
-            return false;
-        };
-
-        // Get the first port
-        getPort(2999);
-
     }
 };
 

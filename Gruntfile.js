@@ -35,7 +35,7 @@ module.exports = function (grunt) {
         watch: {
             server_tests: {
                 files: [
-                    "test/server/**/*.js",
+                    "test/new-server/**/*.js",
                     "tasks/lib/**/*.js"
                 ],
                 tasks: ["jasmine_node"]
@@ -74,7 +74,7 @@ module.exports = function (grunt) {
         },
         jasmine_node: {
             specNameMatcher: "Spec", // load only specs containing specNameMatcher
-            projectRoot: "test/server",
+            projectRoot: "test/new-server",
             requirejs: false,
             forceExit: true,
             jUnit: {

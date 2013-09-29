@@ -1,6 +1,6 @@
 var fs = require("fs");
 var si = require("../../tasks/lib/style-injector");
-var methods = si.methods;
+var methods = new si();
 var options = si.options;
 var testFile = "test/fixtures/test.txt";
 
@@ -25,9 +25,9 @@ describe("watching files", function () {
 
         setTimeout(function () {
             fs.writeFileSync(testFile, "writing to file", "UTF-8");
-        }, 10);
+        }, 100);
 
-        waits(200);
+        waits(500);
 
         runs(function () {
             expect(methods.changeFile).toHaveBeenCalledWith(testFile, io);

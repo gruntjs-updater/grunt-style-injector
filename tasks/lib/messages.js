@@ -45,6 +45,9 @@ module.exports = {
         location: function (url) {
             return clc.yellow("Link clicked! Redirecting all browser to " + clc.green(url));
         },
+        socketConnector: function (host, port) {
+            return "var ___socket___ = io.connect('" + host + ":" + port + "');";
+        },
         clientScript: "/style-injector-client2.js",
         socketIoScript: "/socket.io/socket.io.js"
 };

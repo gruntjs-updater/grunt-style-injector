@@ -1,13 +1,12 @@
 var si = require("../../tasks/lib/style-injector");
 var messages = require("../../tasks/lib/messages");
-var methods = si.methods;
-var options = si.options;
+var styleInjector = new si();
+var options = styleInjector.options;
 
 describe("Exposed Methods", function () {
 
     it("can be loaded", function () {
-        expect(si).toBeDefined();
-        expect(methods).toBeDefined();
+        expect(styleInjector).toBeDefined();
     });
 
     describe("getting the Host IP", function () {
@@ -19,12 +18,12 @@ describe("Exposed Methods", function () {
 
         it("does not throw if no are options provided", function () {
             expect(function () {
-                var hostIp = methods.getHostIp();
+                var hostIp = styleInjector.getHostIp();
             }).not.toThrow();
         });
 
         it("can retrieve the correct host IP address if one is already provided in options", function () {
-            var hostIp = methods.getHostIp({
+            var hostIp = styleInjector.getHostIp({
                 hostIp: "192.0.0.1"
             });
             expect(hostIp).toBe("192.0.0.1");
@@ -32,8 +31,8 @@ describe("Exposed Methods", function () {
 
         it("can retrieve the correct host IP address if NOT provided in options", function () {
 
-            var hostIp = methods.getHostIp();
-            expect(regex.test(hostIp)).toBe(true);
+//            var hostIp = methods.getHostIp(options);
+//            expect(regex.test(hostIp)).toBe(true);
 
 //            expect(hostIp).toBe("10.72.242.109"); // change to an Ip you know works to run the test
         });
@@ -44,26 +43,26 @@ describe("Exposed Methods", function () {
         var cwd = process.cwd();
 
         it("is correct when using ./ ", function () {
-            var baseDir = methods.getBaseDir('./');
+            var baseDir = styleInjector.getBaseDir('./');
             expect(baseDir).toBe(cwd);
         });
         it("is correct when using only a dot", function () {
-            expect(methods.getBaseDir('.')).toBe(cwd);
+            expect(styleInjector.getBaseDir('.')).toBe(cwd);
         });
         it("does not throw if no value is passed", function () {
             expect(function () {
-                methods.getBaseDir();
+                styleInjector.getBaseDir();
             }).not.toThrow();
         });
         it("is correct when using no param", function () {
-            var baseDir = methods.getBaseDir();
+            var baseDir = styleInjector.getBaseDir();
             expect(baseDir).toBe(cwd);
         });
         it("is correct when using a path", function () {
-            expect(methods.getBaseDir("/app")).toBe(cwd + "/app");
+            expect(styleInjector.getBaseDir("/app")).toBe(cwd + "/app");
         });
         it("is correct when using only a forward slash", function () {
-            expect(methods.getBaseDir("/")).toBe(cwd);
+            expect(styleInjector.getBaseDir("/")).toBe(cwd);
         });
     });
 
@@ -75,24 +74,24 @@ describe("Exposed Methods", function () {
 
         it("should log a message", function () {
 
-            methods.log("ERROR", {debugInfo:true});
+            styleInjector.log("ERROR", {debugInfo:true});
             expect(console.log).toHaveBeenCalledWith("ERROR");
         });
         it("should not log anything if turned off in options", function () {
 
-            methods.log("ERROR", {debugInfo:false});
+            styleInjector.log("ERROR", {debugInfo:false});
             expect(console.log).not.toHaveBeenCalled();
         });
         it("should log message if options turned off, but overridden", function () {
 
-            methods.log("ERROR", {debugInfo:false}, true);
+            styleInjector.log("ERROR", {debugInfo:false}, true);
             expect(console.log).toHaveBeenCalled();
         });
     });
 
     describe("getting a file extension", function () {
         it("should return the file extension only", function () {
-            expect(methods.getFileExtension("core.css")).toBe("css");
+            expect(styleInjector.getFileExtension("core.css")).toBe("css");
         });
     });
 
@@ -111,7 +110,7 @@ describe("Exposed Methods", function () {
             var data;
             beforeEach(function(){
                 spyOn(io.sockets, "emit");
-                data = methods.changeFile("/app/styles/core.css", io, options);
+                data = styleInjector.changeFile("/app/styles/core.css", io, options);
             });
 
             it("should return the filename", function () {
@@ -135,7 +134,7 @@ describe("Exposed Methods", function () {
             var data;
             beforeEach(function(){
                 spyOn(io.sockets, "emit");
-                data = methods.changeFile("/app/index.php", io, options);
+                data = styleInjector.changeFile("/app/index.php", io, options);
             });
 
             it("should return the file path", function () {
@@ -160,12 +159,12 @@ describe("Exposed Methods", function () {
             });
 
             it("should log the INJECT message when an inject file was changed", function () {
-                methods.changeFile("/app/styles/core.css", io, options);
+                styleInjector.changeFile("/app/styles/core.css", io, options);
                 expect(messages.browser.inject).toHaveBeenCalled();
             });
 
             it("should log the INJECT message when an inject file was changed", function () {
-                methods.changeFile("/app/styles/core.html", io, options);
+                styleInjector.changeFile("/app/styles/core.html", io, options);
                 expect(messages.browser.reload).toHaveBeenCalled();
             });
         });
