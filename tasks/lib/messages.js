@@ -48,6 +48,6 @@ module.exports = {
         socketConnector: function (host, port) {
             return "var ___socket___ = io.connect('" + host + ":" + port + "');";
         },
-        clientScript: "/style-injector-client2.js",
+        clientScript: "/style-injector-client.min.js",
         socketIoScript: "/socket.io/socket.io.js"
 };
