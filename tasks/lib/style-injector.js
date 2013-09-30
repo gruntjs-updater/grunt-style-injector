@@ -15,105 +15,33 @@ var options;
 
 var scriptData = fs.readFileSync(__dirname + messages.clientScript, "UTF-8");
 
-/**
- * @param data
- */
-//var updateLocations = function (data) {
-//    log(messages.location(data.url), false);
-//    this.broadcast.emit("location:update", { url: data.url });
-//};
-//
-///**
-// * Update scroll position of browsers.
-// * @param data
-// */
-//var updateScrollPosition = function (data) {
-//    this.broadcast.emit("scroll:update", { position: data.pos, ghostId: data.ghostId, url: data.url});
-//};
-//
-///**
-// * Update a text input;
-// * @param data
-// */
-//var updateFormField = function (data) {
-//    this.broadcast.emit("input:update", { id: data.id, value: data.value });
-//};
-//
-///**
-// * Update a select element
-// * @param data
-// */
-//var updateSelectField = function (data) {
-//    this.broadcast.emit("input:update", { id: data.id, value: data.value });
-//};
-//
-///**
-// * Update Radio Field
-// * @param data
-// */
-//var updateRadioField = function (data) {
-//    this.broadcast.emit("input:update:radio", { id: data.id, value: data.value });
-//};
-//
-///**
-// * Update Checkbox
-// * @param data
-// */
-//var updateCheckboxField = function (data) {
-//    this.broadcast.emit("input:update:checkbox", { id: data.id, checked: data.checked });
-//};
-//
-///**
-// * Submit a form
-// * @param data
-// */
-//var submitForm = function (data) {
-//    this.broadcast.emit("form:submit", { id: data.id });
-//};
 
-/**
- * If ghostMode was enabled, inform all browsers when any of them changes URL.
- * @param io
- * @param client
- * @param options
- */
-//var setLocationTracking = function (io, client, options) {
-//
-//    // remember the context of the client that emitted the event.
-//    if (options.ghostMode) {
-//        client.on("location", updateLocations);
-//        client.on("scroll", updateScrollPosition);
-//        client.on("input:type", updateFormField);
-//        client.on("input:select", updateSelectField);
-//        client.on("input:radio", updateRadioField);
-//        client.on("input:checkbox", updateCheckboxField);
-//        client.on("form:submit", submitForm);
-//    }
-//};
-
-/**
- * Main methods exposed for testing
- * @type {{}}
- */
-var styleInjector = function(){};
-
-//styleInjector.options = {
-//
-//};
-//
-//var io;
-//var files;
-
-
+var styleInjector = function () {
+};
 styleInjector.prototype = {
     options: {
         injectFileTypes: ['css', 'png', 'jpg', 'svg', 'gif']
     },
     init: function (files, options) {
+
+        this.userOptions = options;
+
         var _this = this;
 
         this.getPorts(2, function (ports) {
-//            _this.setupSocket();
+
+            // setup Socket.io
+            var io = _this.setupSocket(ports, options);
+
+            // Set up event callbacks
+            var handles = _this.handleSocketConnection(_this.callbacks, options, _this.handleClientSocketEvent);
+
+            // launch the server
+            var server = _this.launchServer(_this.getHostIp(options), ports, options);
+
+            // Watch the files
+            var watcher = _this.watchFiles(files, io, _this.changeFile, options);
+
         }, options);
     },
     /**
@@ -166,7 +94,7 @@ styleInjector.prototype = {
     },
     /**
      * Things to do when a client connects
-     * @param {array} events
+     * @param {Array} events
      * @param {object} userOptions
      * @param {function} handle
      */
@@ -176,15 +104,17 @@ styleInjector.prototype = {
         var ua;
 
         io.sockets.on("connection", function (client) {
-
             // set ghostmode callbacks
             if (userOptions.ghostMode) {
                 for (var i = 0, n = events.length; i < n; i += 1) {
-                    handle(client, events[i], userOptions);
+                    handle(client, events[i], userOptions, _this);
                 }
             }
 
+            client.emit("connection", userOptions);
+
             ua = client.handshake.headers['user-agent'];
+
             _this.logConnection(ua, userOptions);
         });
     },
@@ -194,9 +124,9 @@ styleInjector.prototype = {
      * @param {string} event
      * @param {object} userOptions
      */
-    handleClientSocketEvent: function (client, event, userOptions) {
-        client.on(event.name, function (client) {
-            event.callback(io, client, userOptions);
+    handleClientSocketEvent: function (client, event, userOptions, _this) {
+        client.on(event.name, function (data) {
+            event.callback(client, data, _this);
         });
     },
     /**
@@ -213,22 +143,51 @@ styleInjector.prototype = {
     logConnection: function (ua, userOptions) {
         this.log(messages.connection(parser.setUA(ua).getBrowser()), userOptions, true);
     },
-    callbacks: {
-//        connection: function (io, client, userOptions, context) {
-//
-//            // When a client connects, give them the options.
-//            options.id = client.id;
-//
-//            client.emit("connection", options);
-//
-//            var ua = client.handshake.headers['user-agent'];
-//
-//            log(messages.connection(parser.setUA(ua).getBrowser()), false);
-//
-//            // Set up ghost mode
-//            context.setupGhostMode(client, options);
-//        }
-    },
+    /**
+     * ghostMode Callbacks (responses to client events)
+     */
+    callbacks: [
+        { name: "scroll", callback: function (client, data) {
+            client.broadcast.emit("scroll:update", { position: data.pos, ghostId: data.ghostId, url: data.url});
+        }},
+        {
+            name: "location",
+            callback: function (client, data, context) {
+                context.log(messages.location(data.url), context.userOptions, false);
+                client.broadcast.emit("location:update", { url: data.url });
+            }
+        },
+        {
+            name: "input:type",
+            callback: function (client, data) {
+                client.broadcast.emit("input:update", { id: data.id, value: data.value });
+            }
+        },
+        {
+            name: "input:select",
+            callback: function (client, data) {
+                client.broadcast.emit("input:update", { id: data.id, value: data.value });
+            }
+        },
+        {
+            name: "input:radio",
+            callback: function (client, data) {
+                client.broadcast.emit("input:update:radio", { id: data.id, value: data.value });
+            }
+        },
+        {
+            name: "input:checkbox",
+            callback: function (client, data) {
+                client.broadcast.emit("input:update:checkbox", { id: data.id, checked: data.checked });
+            }
+        },
+        {
+            name: "form:submit",
+            callback: function (client, data) {
+                client.broadcast.emit("form:submit", { id: data.id });
+            }
+        }
+    ],
     /**
      * Helper to try to retrieve the correct external IP for host
      * @param {object} options
@@ -306,12 +265,13 @@ styleInjector.prototype = {
      * @param {string} path
      * @param {socket} io
      * @param {object} options
+     * @param _this
      * @returns {{assetFileName: string}}
      */
-    changeFile: function (path, io, options) {
+    changeFile: function (path, io, options, _this) {
 
-        var fileName = filePath.basename(path),
-                fileExtension = this.getFileExtension(fileName);
+        var fileName = filePath.basename(path);
+        var fileExtension = _this.getFileExtension(path);
 
         var data = {
             assetFileName: fileName,
@@ -320,6 +280,7 @@ styleInjector.prototype = {
 
         var message = "inject";
 
+        // RELOAD page
         if (!_.contains(options.injectFileTypes, fileExtension)) {
             data.url = path;
             message = "reload";
@@ -329,7 +290,8 @@ styleInjector.prototype = {
         io.sockets.emit("reload", data);
 
         // log the message to the console
-        this.log(messages.browser[message](), options, false);
+        _this.log(messages.fileChanged(path), options, false);
+        _this.log(messages.browser[message](), options, false);
 
         return data;
     },
@@ -354,6 +316,7 @@ styleInjector.prototype = {
 
             // serve static files
             loadSnippet.setVars(host, ports[0], ports[1]);
+
             var baseDir = options.server.baseDir || "./";
 
             app = connect()
@@ -367,7 +330,7 @@ styleInjector.prototype = {
 
         if (options.server) {
             msg = messages.initServer(host, ports[1], this.getBaseDir(options.server.baseDir || "./"), options);
-            this.openBrowser(host, ports[1]);
+            this.openBrowser(host, ports[1], options);
         } else {
             msg = messages.init(host, ports[0], ports[1]);
         }
@@ -381,26 +344,30 @@ styleInjector.prototype = {
      * _todo uncomment after testing done
      * @param host
      * @param port
+     * @param options
      */
-    openBrowser: function (host, port) {
-//        var open = require("open");
-//        open("http://"+host+":"+port);
+    openBrowser: function (host, port, options) {
+        if (options.open) {
+            var open = require("open");
+            open("http://" + host + ":" + port);
+        }
     },
     /**
      * Proxy for chokidar watching files
      * @param {array|string} files
      * @param {object} io
      * @param {function} callback
+     * @param options
      */
-    watchFiles: function (files, io, callback) {
+    watchFiles: function (files, io, callback, options) {
 
+        var _this = this;
         var watcher = chokidar.watch(files, {ignored: /^\./, persistent: true});
 
         watcher.on('change', function (filepath) {
-            callback(filepath, io);
+            callback(filepath, io, options, _this);
         });
     },
-
     getFileExtension: function (path) {
         return filePath.extname(path).replace(".", "");
     }

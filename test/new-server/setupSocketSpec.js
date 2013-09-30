@@ -7,38 +7,31 @@ var userOptions = {
 };
 var testFile = "test/fixtures/test.txt";
 
-var done = function () {
-    console.log("done");
-};
-
-var grunt = {
-    fail: {
-        fatal: function () {}
-    }
-};
-
 describe("setup Socket", function () {
 
     var ports = [3001,3002];
     var io;
     var cb;
     var cb2;
-    var cb3;
     var events;
 
     beforeEach(function () {
+
         cb = jasmine.createSpy("1");
         cb2 = jasmine.createSpy("2");
-        cb3 = jasmine.createSpy("3");
 
         events = [
             {
                 name: "random",
-                callback: cb
+                callback: function () {
+                    cb.wasCalled = true;
+                }
             },
             {
                 name: "inputchange",
-                callback: cb2
+                callback: function () {
+                    cb2.wasCalled = true;
+                }
             }
         ];
 
@@ -52,7 +45,7 @@ describe("setup Socket", function () {
         styleInjector.killSocket();
     });
 
-    it("can listen for client events when ghostmode Enabled", function () {
+    it("can listen for client events when ghost mode Enabled", function () {
 
         var socket;
 
@@ -60,13 +53,14 @@ describe("setup Socket", function () {
             socket = clientIo.connect("http://localhost:" + ports[0], {'force new connection':true});
             socket.emit("inputchange", {});
             socket.emit("random", {});
-        }, 100);
+        }, 200);
 
-        waits(200);
+        waits(800);
 
         runs(function () {
             expect(cb2).toHaveBeenCalled();
             expect(cb).toHaveBeenCalled();
+
         });
     });
     it("can log a new connection", function () {

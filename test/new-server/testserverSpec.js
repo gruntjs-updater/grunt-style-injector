@@ -18,7 +18,9 @@ describe("Launching a server", function () {
                     baseDir: "test/fixtures"
                 }
             };
+
             var server;
+
             setTimeout(function () {
                 server = styleInjector.launchServer("localhost", ports, options);
 
@@ -135,7 +137,7 @@ describe("Launching a server", function () {
             waits(10);
 
             runs(function () {
-                expect(styleInjector.openBrowser).toHaveBeenCalledWith("localhost", 3002);
+                expect(styleInjector.openBrowser).toHaveBeenCalledWith("localhost", 3002, options);
                 server.close();
             });
         });

@@ -110,12 +110,13 @@ describe("Exposed Methods", function () {
             var data;
             beforeEach(function(){
                 spyOn(io.sockets, "emit");
-                data = styleInjector.changeFile("/app/styles/core.css", io, options);
+                data = styleInjector.changeFile("/app/styles/core.css", io, options, styleInjector);
             });
 
             it("should return the filename", function () {
 
                 expect(data.assetFileName).toBe("core.css");
+
             });
             it("should return the fileExtension", function () {
 
@@ -134,7 +135,7 @@ describe("Exposed Methods", function () {
             var data;
             beforeEach(function(){
                 spyOn(io.sockets, "emit");
-                data = styleInjector.changeFile("/app/index.php", io, options);
+                data = styleInjector.changeFile("/app/index.php", io, options, styleInjector);
             });
 
             it("should return the file path", function () {
@@ -159,12 +160,12 @@ describe("Exposed Methods", function () {
             });
 
             it("should log the INJECT message when an inject file was changed", function () {
-                styleInjector.changeFile("/app/styles/core.css", io, options);
+                styleInjector.changeFile("/app/styles/core.css", io, options, styleInjector);
                 expect(messages.browser.inject).toHaveBeenCalled();
             });
 
             it("should log the INJECT message when an inject file was changed", function () {
-                styleInjector.changeFile("/app/styles/core.html", io, options);
+                styleInjector.changeFile("/app/styles/core.html", io, options, styleInjector);
                 expect(messages.browser.reload).toHaveBeenCalled();
             });
         });

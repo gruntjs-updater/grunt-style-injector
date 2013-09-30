@@ -501,4 +501,4 @@
         document.forms[data.id].submit();
     });
 
-}(window, (typeof socket === "undefined") ? {} : socket));
+}(window, (typeof ___socket___ === "undefined") ? {} : ___socket___));

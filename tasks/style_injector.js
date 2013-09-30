@@ -26,18 +26,23 @@ module.exports = function (grunt) {
                 remove : null
             },
             debugInfo: true,
-            reloadFileTypes: ['.php', '.html', '.js', '.erb'],
-            injectFileTypes: ['.css', '.png', '.jpg', '.svg', '.gif'],
+            background: false,
+            reloadFileTypes: ['php', 'html', 'js', 'erb'],
+            injectFileTypes: ['css', 'png', 'jpg', 'svg', 'gif'],
             host: null,
-            ghostMode: false,
-            server: false
+            server: false,
+            open: true
         });
 
         //noinspection JSUnresolvedVariable,JSCheckFunctionSignatures
-        var styleinjector = require('./lib/style-injector.js').watch(this.filesSrc, options, done, grunt);
+
+        var si = require('./lib/style-injector.js');
+        var styleInjector = new si();
+
+        styleInjector.init(this.filesSrc, options);
 
         //noinspection JSUnresolvedVariable
-        if (options.watchTask) {
+        if (options.watchTask || options.background) {
             done(); // Allow Watch task to run after
         }
     });
