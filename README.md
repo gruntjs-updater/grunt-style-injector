@@ -1,5 +1,11 @@
 # grunt-style-injector [![Build Status](https://travis-ci.org/shakyShane/grunt-style-injector.png?branch=master)](https://travis-ci.org/shakyShane/grunt-style-injector)
 
+#Deprecated - This project is now [grunt-browser-sync](https://github.com/shakyShane/grunt-browser-sync)
+
+(meaning this one is no-longer supported/updated)
+
+---
+
 > A live-reload alternative with support for legacy IE browsers.
 
 ## Getting Started
